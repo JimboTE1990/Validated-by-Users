@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, ArrowRight } from "lucide-react";
+import { CalendarIcon, Upload, ArrowRight, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -22,18 +22,21 @@ const CreatePost = () => {
     duration: ""
   });
   const [scheduleDate, setScheduleDate] = useState<Date>();
+  const [scheduleTime, setScheduleTime] = useState("");
   const [images, setImages] = useState<FileList | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Calculate total cost with 15% admin fee
-    const prizeAmount = parseFloat(formData.prizePool) || 0;
-    const adminFee = prizeAmount * 0.15;
-    const totalCost = prizeAmount + adminFee;
-    
-    // Navigate to dummy checkout with the cost
-    navigate('/checkout', { state: { totalCost, prizePool: prizeAmount, adminFee } });
+    // Navigate to terms and conditions page
+    navigate('/terms-conditions', { 
+      state: { 
+        formData, 
+        scheduleDate, 
+        scheduleTime,
+        prizePool: parseFloat(formData.prizePool) || 0
+      } 
+    });
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -110,47 +113,62 @@ const CreatePost = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="prizePool">Prize Pool Budget (£)</Label>
-                  <Input
-                    id="prizePool"
-                    type="number"
-                    min="10"
-                    step="10"
-                    placeholder="100"
-                    value={formData.prizePool}
-                    onChange={(e) => handleInputChange("prizePool", e.target.value)}
-                    required
-                  />
+                  <Label>Prize Pool Budget (£)</Label>
+                  <Select value={formData.prizePool} onValueChange={(value) => handleInputChange("prizePool", value)} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prize pool amount" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">£10</SelectItem>
+                      <SelectItem value="25">£25</SelectItem>
+                      <SelectItem value="50">£50</SelectItem>
+                      <SelectItem value="100">£100</SelectItem>
+                      <SelectItem value="250">£250</SelectItem>
+                      <SelectItem value="500">£500</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    Minimum £10. A 15% admin fee will be added at checkout.
+                    A 15% admin fee will be added at checkout.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Schedule Post Date/Time</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !scheduleDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {scheduleDate ? format(scheduleDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={scheduleDate}
-                        onSelect={setScheduleDate}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
+                  <div className="grid grid-cols-2 gap-4">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !scheduleDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {scheduleDate ? format(scheduleDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={scheduleDate}
+                          onSelect={setScheduleDate}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={scheduleTime}
+                        onChange={(e) => setScheduleTime(e.target.value)}
+                        className="pl-10"
+                        required
                       />
-                    </PopoverContent>
-                  </Popover>
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -168,7 +186,7 @@ const CreatePost = () => {
 
                 <div className="flex justify-end pt-4">
                   <Button type="submit" variant="hero" size="lg" className="min-w-[160px]">
-                    Next: Payment
+                    Next: Terms & Conditions
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
