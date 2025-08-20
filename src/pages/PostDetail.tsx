@@ -174,12 +174,6 @@ const PostDetail = () => {
                         <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
                           {comment.comment}
                         </p>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm" className="h-8 px-2">
-                            <ThumbsUp className="h-3 w-3 mr-1" />
-                            {comment.likes}
-                          </Button>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -209,15 +203,6 @@ const PostDetail = () => {
                   <Progress value={progressPercentage} className="h-2" />
                 </div>
                 
-                <Button 
-                  variant="prize" 
-                  size="lg" 
-                  className="w-full mt-6"
-                  onClick={() => document.getElementById('feedback-form')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  <Trophy className="h-4 w-4" />
-                  Enter Draw
-                </Button>
               </CardContent>
             </Card>
             
@@ -274,7 +259,7 @@ const PostDetail = () => {
                     variant="hero"
                   >
                     <Send className="h-4 w-4" />
-                    Submit Feedback
+                    Submit Feedback and Enter Draw
                   </Button>
                 </div>
               </CardContent>
@@ -283,7 +268,7 @@ const PostDetail = () => {
             {/* Stats */}
             <Card className="border-0 bg-gradient-card shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Round Stats</CardTitle>
+                <CardTitle className="text-lg">Key Post Data</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
