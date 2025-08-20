@@ -40,10 +40,12 @@ const Home = () => {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="xl" className="min-w-[200px]">
-                <Users className="h-5 w-5" />
-                For Founders
-              </Button>
+              <Link to="/create-post">
+                <Button variant="outline" size="xl" className="min-w-[200px]">
+                  <Users className="h-5 w-5" />
+                  Request User Feedback
+                </Button>
+              </Link>
             </div>
             
             <div className="relative mx-auto max-w-4xl">
