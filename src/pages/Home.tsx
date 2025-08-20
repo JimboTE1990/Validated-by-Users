@@ -319,6 +319,60 @@ const Home = () => {
           </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-muted/30 py-16">
+        <div className="container">
+          <div className="text-center">
+            {/* Logo */}
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold text-foreground">VALIDATED BY USERS</span>
+              </div>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="flex flex-wrap justify-center gap-8 mb-8 text-sm">
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                Contact
+              </Link>
+              <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <Link to="/terms-conditions" className="text-muted-foreground hover:text-foreground transition-colors">
+                Terms of Use
+              </Link>
+              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </Link>
+              <Link to="/help" className="text-muted-foreground hover:text-foreground transition-colors">
+                Help Center
+              </Link>
+            </div>
+
+            {/* Contact Information */}
+            <div className="mb-8">
+              <p className="text-muted-foreground">
+                Need help? Email us at{" "}
+                <a 
+                  href="mailto:support@validatedbyusers.com" 
+                  className="text-primary hover:underline"
+                >
+                  support@validatedbyusers.com
+                </a>
+              </p>
+            </div>
+
+            {/* Copyright */}
+            <div className="text-sm text-muted-foreground">
+              © 2025 Validated by Users. All rights reserved.
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
