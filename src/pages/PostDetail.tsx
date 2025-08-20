@@ -68,15 +68,14 @@ const mockComments = [
 const PostDetail = () => {
   const { id } = useParams();
   const [feedback, setFeedback] = useState("");
-  const [userEntries, setUserEntries] = useState(0);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleSubmitFeedback = () => {
     if (feedback.trim() && agreedToTerms) {
-      setUserEntries(prev => prev + 1);
-      setFeedback("");
+      setHasSubmitted(true);
       setAgreedToTerms(false);
-      // Here you would normally submit to backend
+      // Here you would normally submit/update to backend
     }
   };
 
@@ -191,7 +190,7 @@ const PostDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-4">
-                  <div className="text-3xl font-bold text-primary mb-2">{userEntries}</div>
+                  <div className="text-3xl font-bold text-primary mb-2">{hasSubmitted ? 1 : 0}</div>
                   <div className="text-sm text-muted-foreground">Your Entries</div>
                 </div>
                 
@@ -209,9 +208,14 @@ const PostDetail = () => {
             {/* Feedback Form */}
             <Card id="feedback-form" className="border-0 bg-gradient-card shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg">Leave Feedback</CardTitle>
+                <CardTitle className="text-lg">
+                  {hasSubmitted ? "Edit Your Feedback" : "Leave Feedback"}
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Share your thoughts to automatically enter the prize draw!
+                  {hasSubmitted 
+                    ? "You can edit your feedback during the validation window."
+                    : "Share your thoughts to automatically enter the prize draw!"
+                  }
                 </p>
               </CardHeader>
               <CardContent>
@@ -246,7 +250,10 @@ const PostDetail = () => {
                   </div>
 
                   <Textarea
-                    placeholder="What do you think about this product? Share your honest feedback..."
+                    placeholder={hasSubmitted 
+                      ? "Edit your feedback..." 
+                      : "What do you think about this product? Share your honest feedback..."
+                    }
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     className="min-h-[120px] resize-none"
@@ -259,7 +266,7 @@ const PostDetail = () => {
                     variant="hero"
                   >
                     <Send className="h-4 w-4" />
-                    Submit Feedback and Enter Draw
+                    {hasSubmitted ? "Update Feedback" : "Submit Feedback and Enter Draw"}
                   </Button>
                 </div>
               </CardContent>
