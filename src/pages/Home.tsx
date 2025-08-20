@@ -181,11 +181,12 @@ const Home = () => {
                 </ul>
               </div>
               <div className="relative">
-                <img 
-                  src={mockupFounderPost} 
-                  alt="Founder creating a validation post interface"
-                  className="rounded-lg shadow-2xl border border-border/50"
-                />
+                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="text-4xl mb-2">📱</div>
+                    <p className="text-sm">Step 1 Preview</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -194,11 +195,12 @@ const Home = () => {
           <div id="step-2" className={`mb-16 transition-all duration-500 ${activeStep === 2 ? 'opacity-100' : 'opacity-60'}`}>
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1">
-                <img 
-                  src={mockupUserFeedback} 
-                  alt="User providing feedback interface"
-                  className="rounded-lg shadow-2xl border border-border/50"
-                />
+                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="text-4xl mb-2">💬</div>
+                    <p className="text-sm">Step 2 Preview</p>
+                  </div>
+                </div>
               </div>
               <div className="order-1 lg:order-2">
                 <div className="flex items-center gap-3 mb-6">
@@ -267,11 +269,12 @@ const Home = () => {
                 </ul>
               </div>
               <div className="relative">
-                <img 
-                  src={mockupWinnerScreen} 
-                  alt="Winner announcement interface"
-                  className="rounded-lg shadow-2xl border border-border/50"
-                />
+                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <div className="text-4xl mb-2">🏆</div>
+                    <p className="text-sm">Step 3 Preview</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

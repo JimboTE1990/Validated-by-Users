@@ -14,7 +14,8 @@ import {
   Star, 
   Send,
   TrendingUp,
-  Users
+  Users,
+  CheckCircle
 } from "lucide-react";
 
 // Mock post data
@@ -68,11 +69,13 @@ const PostDetail = () => {
   const { id } = useParams();
   const [feedback, setFeedback] = useState("");
   const [userEntries, setUserEntries] = useState(0);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleSubmitFeedback = () => {
-    if (feedback.trim()) {
+    if (feedback.trim() && agreedToTerms) {
       setUserEntries(prev => prev + 1);
       setFeedback("");
+      setAgreedToTerms(false);
       // Here you would normally submit to backend
     }
   };
@@ -228,15 +231,45 @@ const PostDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* Feedback Guidelines */}
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                    <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                      Feedback Guidelines
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Share constructive, honest feedback</li>
+                      <li>• Quality feedback may get boosted for extra entries</li>
+                      <li>• No spam or promotional content</li>
+                      <li>• Be respectful and professional</li>
+                    </ul>
+                  </div>
+
+                  {/* Terms Agreement */}
+                  <div className="flex items-start space-x-3 p-3 bg-accent/5 rounded-lg border border-accent/20">
+                    <input
+                      type="checkbox"
+                      id="terms-agreement"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-border/50 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="terms-agreement" className="text-sm text-muted-foreground leading-relaxed">
+                      I agree to provide quality feedback following the guidelines above and understand that 
+                      my submission will be reviewed by the founder.
+                    </label>
+                  </div>
+
                   <Textarea
                     placeholder="What do you think about this product? Share your honest feedback..."
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     className="min-h-[120px] resize-none"
+                    disabled={!agreedToTerms}
                   />
                   <Button 
                     onClick={handleSubmitFeedback}
-                    disabled={!feedback.trim()}
+                    disabled={!feedback.trim() || !agreedToTerms}
                     className="w-full"
                     variant="hero"
                   >
