@@ -58,9 +58,15 @@ const Header = () => {
           <Link to="/feed" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
             Discover
           </Link>
-          <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
-            Profile
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
+              Profile
+            </Link>
+          ) : (
+            <button onClick={handleSignIn} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
+              Profile
+            </button>
+          )}
           
           <div className="flex items-center space-x-2">
             {isAuthenticated ? (

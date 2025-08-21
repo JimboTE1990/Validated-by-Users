@@ -17,7 +17,8 @@ const Auth = () => {
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
-    name: "", 
+    firstName: "", 
+    lastName: "",
     email: "", 
     password: "", 
     confirmPassword: "" 
@@ -213,16 +214,29 @@ const Auth = () => {
               
               <TabsContent value="register" className="space-y-4">
                 <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-name">Full Name</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={registerForm.name}
-                      onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                      required
-                    />  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="register-firstName">First Name</Label>
+                      <Input
+                        id="register-firstName"
+                        type="text"
+                        placeholder="Enter your first name"
+                        value={registerForm.firstName}
+                        onChange={(e) => setRegisterForm({ ...registerForm, firstName: e.target.value })}
+                        required
+                      />  
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="register-lastName">Last Name</Label>
+                      <Input
+                        id="register-lastName"
+                        type="text"
+                        placeholder="Enter your last name"
+                        value={registerForm.lastName}
+                        onChange={(e) => setRegisterForm({ ...registerForm, lastName: e.target.value })}
+                        required
+                      />  
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>

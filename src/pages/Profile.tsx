@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { 
   Trophy, 
@@ -11,12 +15,16 @@ import {
   Calendar,
   Coins,
   Star,
-  History
+  History,
+  Edit,
+  Save,
+  X
 } from "lucide-react";
 
 // Mock user data
 const mockUser = {
-  name: "Alex Thompson",
+  firstName: "Alex",
+  lastName: "Thompson", 
   email: "alex@example.com",
   avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex-profile",
   joinDate: "March 2024",
@@ -93,6 +101,32 @@ const mockParticipations = [
 ];
 
 const Profile = () => {
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    firstName: mockUser.firstName,
+    lastName: mockUser.lastName,
+    email: mockUser.email
+  });
+
+  const handleSave = () => {
+    // In a real app, this would make an API call to update user info
+    toast({
+      title: "Profile updated",
+      description: "Your profile information has been successfully updated.",
+    });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setUserInfo({
+      firstName: mockUser.firstName,
+      lastName: mockUser.lastName,
+      email: mockUser.email
+    });
+    setIsEditing(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -102,15 +136,68 @@ const Profile = () => {
         <div className="text-center mb-12">
           <img 
             src={mockUser.avatar} 
-            alt={mockUser.name}
+            alt={`${userInfo.firstName} ${userInfo.lastName}`}
             className="h-24 w-24 rounded-full border-4 border-primary/20 mx-auto mb-4"
           />
-          <h1 className="text-3xl font-bold text-foreground mb-2">{mockUser.name}</h1>
-          <p className="text-muted-foreground mb-4">{mockUser.email}</p>
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-            <Calendar className="h-3 w-3 mr-1" />
-            Joined {mockUser.joinDate}
-          </Badge>
+          
+          {isEditing ? (
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    value={userInfo.firstName}
+                    onChange={(e) => setUserInfo({...userInfo, firstName: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    value={userInfo.lastName}
+                    onChange={(e) => setUserInfo({...userInfo, lastName: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={userInfo.email}
+                  onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
+                />
+              </div>
+              <div className="flex space-x-2 justify-center">
+                <Button onClick={handleSave} size="sm">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </Button>
+                <Button onClick={handleCancel} variant="outline" size="sm">
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                {userInfo.firstName} {userInfo.lastName}
+              </h1>
+              <p className="text-muted-foreground mb-4">{userInfo.email}</p>
+              <div className="flex items-center justify-center space-x-4 mb-4">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Joined {mockUser.joinDate}
+                </Badge>
+                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Button>
+              </div>
+            </>
+          )}
         </div>
         
         {/* Stats Cards */}
