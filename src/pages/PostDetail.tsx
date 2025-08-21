@@ -246,20 +246,20 @@ const PostDetail = () => {
               <CardHeader>
                 <CardTitle className="text-lg">Your Entry Status</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-center mb-4">
-                  <div className="text-3xl font-bold text-primary mb-2">{hasSubmitted ? 1 : 0}</div>
-                  <div className="text-sm text-muted-foreground">Your Entries</div>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <span className="text-sm font-medium text-foreground">Entered</span>
+                  <Badge variant={hasSubmitted ? "default" : "secondary"} className="text-xs">
+                    {hasSubmitted ? "Yes" : "No"}
+                  </Badge>
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Draw Progress</span>
-                    <span className="text-foreground">{mockPost.entries}/{mockPost.maxEntries}</span>
-                  </div>
-                  <Progress value={progressPercentage} className="h-2" />
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <span className="text-sm font-medium text-foreground">Boosted</span>
+                  <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
+                    Yes
+                  </Badge>
                 </div>
-                
               </CardContent>
             </Card>
             
