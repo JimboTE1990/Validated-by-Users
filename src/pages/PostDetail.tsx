@@ -256,8 +256,8 @@ const PostDetail = () => {
                 
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm font-medium text-foreground">Boosted</span>
-                  <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
-                    Yes
+                  <Badge variant={hasSubmitted ? "secondary" : "secondary"} className={hasSubmitted ? "bg-accent/10 text-accent border-0" : ""}>
+                    {hasSubmitted ? "Yes" : "No"}
                   </Badge>
                 </div>
               </CardContent>
