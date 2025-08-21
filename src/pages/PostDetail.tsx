@@ -15,7 +15,10 @@ import {
   Send,
   TrendingUp,
   Users,
-  CheckCircle
+  CheckCircle,
+  Globe,
+  ExternalLink,
+  ImageIcon
 } from "lucide-react";
 
 // Mock post data
@@ -136,6 +139,61 @@ const PostDetail = () => {
                       {mockPost.commentCount}
                     </div>
                     <div className="text-sm text-muted-foreground">Entries</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* App Link and Media */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl">App & Media</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* App Link */}
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3">Try the App</h3>
+                  <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
+                    <Globe className="h-5 w-5 text-primary flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <a 
+                        href="https://ecotrack-app.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary/80 transition-colors font-medium break-all"
+                      >
+                        https://ecotrack-app.com
+                      </a>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Click to open the app in a new tab
+                      </p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </div>
+                </div>
+
+                {/* Images/Media */}
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3">Product Images</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">App Screenshot 1</p>
+                      </div>
+                    </div>
+                    <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">App Screenshot 2</p>
+                      </div>
+                    </div>
+                    <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center md:col-span-2">
+                      <div className="text-center text-muted-foreground">
+                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">Product Demo Video</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
