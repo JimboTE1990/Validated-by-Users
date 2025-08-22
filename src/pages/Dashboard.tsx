@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
+import { useUserActivities } from "@/hooks/useUserActivities";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,114 +31,10 @@ import {
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const { profile, activities, loading } = useProfile(user?.id);
+  const { profile, loading: profileLoading } = useProfile(user?.id);
+  const { activities, activePools, loading: activitiesLoading, getTimeLeft } = useUserActivities(user?.id);
 
-  // Comprehensive feedback and activity history
-  const feedbackHistory = [
-    {
-      id: "1",
-      type: "feedback",
-      title: "EcoTrack - Personal Carbon Footprint App",
-      company: "GreenTech Solutions",
-      website: "https://ecotrack.com",
-      prizePool: 250,
-      reward: "£250 Pool Entry",
-      date: "2 hours ago",
-      status: "pending",
-      feedback: "Great concept! I love how intuitive the carbon tracking interface is. The daily tips feature is particularly engaging and makes users feel empowered to make a difference. However, I think the app could benefit from social features - allowing users to compete with friends or family members could significantly increase engagement and retention.",
-      category: "Environment",
-      timeLeft: "2 days left"
-    },
-    {
-      id: "2",
-      type: "win",
-      title: "DevSync - Real-time Code Collaboration", 
-      company: "CodeFlow Inc",
-      website: "https://devsync.io",
-      prizePool: 500,
-      reward: "£67.50 Won",
-      date: "3 days ago",
-      status: "completed",
-      feedback: "This tool is a game-changer for remote development teams. The real-time collaboration features are seamless, and the conflict resolution system is brilliant. I particularly appreciate the integrated code review process. My only suggestion would be to add support for more programming languages and improve the mobile app experience.",
-      category: "Developer Tools",
-      timeLeft: "Completed"
-    },
-    {
-      id: "3",
-      type: "feedback",
-      title: "MindfulAI - Mental Health Companion",
-      company: "WellnessTech",
-      website: "https://mindfulai.app",
-      prizePool: 100,
-      reward: "£100 Pool Entry",
-      date: "5 days ago", 
-      status: "pending",
-      feedback: "The AI-powered mood tracking is innovative and the guided meditation sessions are high quality. The personalized recommendations based on user behavior are spot-on. However, I'd suggest adding more customization options for the interface and perhaps integrating with popular fitness trackers for a more holistic approach to mental wellness.",
-      category: "Health & Wellness",
-      timeLeft: "1 day left"
-    },
-    {
-      id: "4",
-      type: "boost",
-      title: "InvestWise - Beginner-Friendly Trading",
-      company: "FinanceFirst",
-      website: "https://investwise.com",
-      prizePool: 300,
-      reward: "+3 Bonus Entries",
-      date: "1 week ago",
-      status: "completed",  
-      feedback: "Excellent onboarding process for new investors! The educational content is comprehensive yet easy to understand. The paper trading feature is perfect for beginners to practice. I'd love to see more advanced charting tools and perhaps integration with more international markets.",
-      category: "Finance",
-      timeLeft: "Completed"
-    },
-    {
-      id: "5",  
-      type: "feedback",
-      title: "LocalConnect - Neighborhood Hub",
-      company: "CommunityTech",
-      website: "https://localconnect.com", 
-      prizePool: 150,
-      reward: "£150 Pool Entry",
-      date: "2 weeks ago",
-      status: "pending",
-      feedback: "Love the community-focused approach! The local event discovery feature works really well, and the neighborhood marketplace is intuitive. The safety features for meetups are well thought out. Could benefit from better push notification management and perhaps integration with popular calendar apps.",
-      category: "Social",
-      timeLeft: "5 days left"
-    }
-  ];
-
-  const activePools = [
-    {
-      id: "1",
-      title: "EcoTrack - Personal Carbon Footprint App",
-      category: "Environment",
-      prizePool: 250,
-      entries: 1,
-      status: "Active",
-      timeLeft: "2 days left",
-      myPosition: "Top 20%"
-    },
-    {
-      id: "3",
-      title: "MindfulAI - Mental Health Companion", 
-      category: "Health & Wellness",
-      prizePool: 100,
-      entries: 1,
-      status: "Active", 
-      timeLeft: "1 day left",
-      myPosition: "Top 35%"
-    },
-    {
-      id: "5",
-      title: "LocalConnect - Neighborhood Hub",
-      category: "Social",
-      prizePool: 150,
-      entries: 1,
-      status: "Active",
-      timeLeft: "5 days left",
-      myPosition: "Top 15%"
-    }
-  ];
+  const loading = profileLoading || activitiesLoading;
 
   const stats = [
     {
@@ -262,7 +159,25 @@ const Dashboard = () => {
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {activities.length > 0 ? activities.map((activity) => (
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="h-10 w-10 bg-muted rounded-full"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-muted rounded w-3/4"></div>
+                            <div className="h-3 bg-muted rounded w-1/2"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-muted rounded w-20"></div>
+                            <div className="h-6 bg-muted rounded w-16"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : activities.length > 0 ? activities.map((activity) => (
                   <div key={activity.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
@@ -279,14 +194,24 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-medium text-foreground text-sm">{activity.post.title}</div>
-                        <div className="text-xs text-muted-foreground">{new Date(activity.created_at).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(activity.created_at).toLocaleDateString('en-GB', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: new Date(activity.created_at).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                          })}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className={`font-semibold text-sm ${
-                        activity.activity_type === 'win' ? 'text-success' : 'text-primary'
+                        activity.activity_type === 'win' ? 'text-success' : 
+                        activity.activity_type === 'boost' ? 'text-accent' : 'text-primary'
                       }`}>
-                        {activity.reward_description || `${activity.activity_type} activity`}
+                        {activity.reward_description || 
+                         (activity.activity_type === 'win' ? `£${activity.reward_amount?.toFixed(2) || '0.00'} Won` :
+                          activity.activity_type === 'boost' ? '+Bonus Entries' :
+                          `£${activity.post.prize_pool} Pool Entry`)}
                       </div>
                       <Badge 
                         variant={activity.status === 'completed' ? 'default' : 'secondary'}
@@ -296,92 +221,7 @@ const Dashboard = () => {
                       </Badge>
                     </div>
                   </div>
-                )) : feedbackHistory.map((activity) => (
-                  <Dialog key={activity.id}>
-                    <DialogTrigger asChild>
-                      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <div className="flex items-center space-x-4">
-                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                            activity.type === 'win' ? 'bg-success/10' : 
-                            activity.type === 'boost' ? 'bg-accent/10' : 'bg-primary/10'
-                          }`}>
-                            {activity.type === 'win' ? (
-                              <Trophy className="h-5 w-5 text-success" />
-                            ) : activity.type === 'boost' ? (
-                              <Star className="h-5 w-5 text-accent" />
-                            ) : (
-                              <MessageCircle className="h-5 w-5 text-primary" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium text-foreground text-sm">{activity.title}</div>
-                            <div className="text-xs text-muted-foreground">{activity.date}</div>
-                          </div>
-                        </div>
-                        <div className="text-right flex items-center space-x-2">
-                          <div>
-                            <div className={`font-semibold text-sm ${
-                              activity.type === 'win' ? 'text-success' : 'text-primary'
-                            }`}>
-                              {activity.reward}
-                            </div>
-                            <Badge 
-                              variant={activity.status === 'completed' ? 'default' : 'secondary'}
-                              className="text-xs"
-                            >
-                              {activity.status}
-                            </Badge>
-                          </div>
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between">
-                          <span>{activity.title}</span>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-                            {activity.category}
-                          </Badge>
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                          <div>
-                            <p className="font-medium text-foreground">{activity.company}</p>
-                            <p className="text-sm text-muted-foreground">Prize Pool: £{activity.prizePool}</p>
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" asChild>
-                              <a href={activity.website} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4 mr-1" />
-                                Visit Website
-                              </a>
-                            </Button>
-                            <Link to={`/post/${activity.id}`}>
-                              <Button size="sm">
-                                View Original Post
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-semibold text-foreground mb-2">Your Feedback:</h4>
-                          <div className="p-4 bg-background border rounded-lg">
-                            <p className="text-sm text-foreground leading-relaxed">{activity.feedback}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Submitted: {activity.date}</span>
-                          <span className="text-muted-foreground">Status: {activity.timeLeft}</span>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                ))}
-                {activities.length === 0 && (
+                )) : (
                   <div className="text-center py-8">
                     <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">No activity yet. Start participating in validation rounds!</p>
@@ -393,14 +233,37 @@ const Dashboard = () => {
           
           <TabsContent value="active-pools" className="space-y-4">
             <div className="grid gap-4">
-              {activePools.map((pool) => (
+              {loading ? (
+                <div className="space-y-4">
+                  {[...Array(2)].map((_, i) => (
+                    <Card key={i} className="border-0 bg-gradient-card shadow-sm animate-pulse">
+                      <CardContent className="p-6">
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <div className="h-6 bg-muted rounded w-20"></div>
+                            <div className="h-4 bg-muted rounded w-16"></div>
+                          </div>
+                          <div className="h-6 bg-muted rounded w-3/4"></div>
+                          <div className="flex justify-between">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-muted rounded w-24"></div>
+                              <div className="h-4 bg-muted rounded w-20"></div>
+                            </div>
+                            <div className="h-9 bg-muted rounded w-24"></div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : activePools.length > 0 ? activePools.map((pool) => (
                 <Card key={pool.id} className="border-0 bg-gradient-card shadow-sm">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-                        {pool.category}
+                        {pool.category?.name || 'General'}
                       </Badge>
-                      <div className="text-sm text-muted-foreground">{pool.timeLeft}</div>
+                      <div className="text-sm text-muted-foreground">{getTimeLeft(pool.end_date)}</div>
                     </div>
                     
                     <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -410,34 +273,33 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-xl font-bold text-success">
-                            £{pool.prizePool}
-                          </div>
+                          <div className="text-lg font-bold text-primary">£{pool.prize_pool}</div>
                           <div className="text-xs text-muted-foreground">Prize Pool</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-xl font-bold text-primary">
-                            {pool.entries}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Your Entries</div>
+                          <div className="text-lg font-bold text-foreground">{pool.current_entries}</div>
+                          <div className="text-xs text-muted-foreground">Total Entries</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-accent">
-                            {pool.myPosition}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Position</div>
+                          <div className="text-sm font-medium text-accent">Participating</div>
+                          <div className="text-xs text-muted-foreground">Status</div>
                         </div>
                       </div>
-                      
-                      <Link to={`/post/${pool.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </Link>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/post/${pool.id}`}>View Details</Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) : (
+                <div className="text-center py-8">
+                  <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">No active pools yet. Browse available posts to start participating!</p>
+                  <Button variant="outline" className="mt-4" asChild>
+                    <Link to="/feed">Explore Posts</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
           
