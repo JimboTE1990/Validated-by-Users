@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,20 +32,33 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [userEmail, setUserEmail] = useState("");
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { profile, activities, loading } = useProfile(currentUser?.id);
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("isAuthenticated");
-    const email = localStorage.getItem("userEmail");
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      
+      setCurrentUser(session.user);
+    };
     
-    if (!isAuth) {
-      navigate("/auth");
-      return;
-    }
-    
-    if (email) {
-      setUserEmail(email);
-    }
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate("/auth");
+      } else {
+        setCurrentUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Comprehensive feedback and activity history
@@ -156,21 +171,21 @@ const Dashboard = () => {
   const stats = [
     {
       title: "Total Earnings",
-      value: "£87.50",
+      value: `£${profile?.total_winnings?.toFixed(2) || "0.00"}`,
       icon: Trophy,
       trend: "+12%",
       color: "text-success"
     },
     {
       title: "Feedback Given", 
-      value: "23",
+      value: profile?.total_feedback?.toString() || "0",
       icon: MessageCircle,
       trend: "+5",
       color: "text-primary"
     },
     {
       title: "Active Entries",
-      value: "5", 
+      value: profile?.total_entries?.toString() || "0", 
       icon: TrendingUp,
       trend: "3 ending soon",
       color: "text-accent"
@@ -185,7 +200,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {userEmail.split('@')[0]}!
+            Welcome back, {profile?.first_name || currentUser?.email?.split('@')[0] || 'User'}!
           </h1>
           <p className="text-muted-foreground">
             Track your feedback history and manage your active prize pool entries
@@ -276,7 +291,41 @@ const Dashboard = () => {
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {feedbackHistory.map((activity) => (
+                {activities.length > 0 ? activities.map((activity) => (
+                  <div key={activity.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                        activity.activity_type === 'win' ? 'bg-success/10' : 
+                        activity.activity_type === 'boost' ? 'bg-accent/10' : 'bg-primary/10'
+                      }`}>
+                        {activity.activity_type === 'win' ? (
+                          <Trophy className="h-5 w-5 text-success" />
+                        ) : activity.activity_type === 'boost' ? (
+                          <Star className="h-5 w-5 text-accent" />
+                        ) : (
+                          <MessageCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground text-sm">{activity.post.title}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(activity.created_at).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-semibold text-sm ${
+                        activity.activity_type === 'win' ? 'text-success' : 'text-primary'
+                      }`}>
+                        {activity.reward_description || `${activity.activity_type} activity`}
+                      </div>
+                      <Badge 
+                        variant={activity.status === 'completed' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {activity.status}
+                      </Badge>
+                    </div>
+                  </div>
+                )) : feedbackHistory.map((activity) => (
                   <Dialog key={activity.id}>
                     <DialogTrigger asChild>
                       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
@@ -361,6 +410,12 @@ const Dashboard = () => {
                     </DialogContent>
                   </Dialog>
                 ))}
+                {activities.length === 0 && (
+                  <div className="text-center py-8">
+                    <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No activity yet. Start participating in validation rounds!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -434,7 +489,7 @@ const Dashboard = () => {
                 <CardContent>
                   <div className="text-center mb-4">
                     <div className="text-3xl font-bold text-primary mb-2">
-                      £45.00
+                      £{profile?.total_winnings?.toFixed(2) || "0.00"}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       These are prize pool rewards awaiting release once rounds conclude.
