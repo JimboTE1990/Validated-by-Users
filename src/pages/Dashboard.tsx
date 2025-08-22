@@ -22,7 +22,10 @@ import {
   History,
   Coins,
   ExternalLink,
-  Eye
+  Eye,
+  CheckCircle,
+  XCircle,
+  CreditCard
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -261,9 +264,9 @@ const Dashboard = () => {
               <Trophy className="h-4 w-4 mr-2" />
               Active Pools  
             </TabsTrigger>
-            <TabsTrigger value="wallet">
-              <Coins className="h-4 w-4 mr-2" />
-              Wallet
+            <TabsTrigger value="payouts">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Payouts
             </TabsTrigger>
           </TabsList>
           
@@ -412,37 +415,129 @@ const Dashboard = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="wallet" className="space-y-4">
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardHeader>
-                <CardTitle>Prize Wallet</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center mb-8">
-                  <div className="text-4xl font-bold text-success mb-2">
-                    £87.50
+          <TabsContent value="payouts" className="space-y-4">
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-foreground mb-2">Your Payouts</h2>
+                <p className="text-muted-foreground">Rewards are securely paid out through Stripe Express.</p>
+              </div>
+
+              {/* Pending Rewards */}
+              <Card className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    Pending Rewards
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center mb-4">
+                    <div className="text-3xl font-bold text-primary mb-2">
+                      £45.00
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      These are prize pool rewards awaiting release once rounds conclude.
+                    </p>
                   </div>
-                  <div className="text-muted-foreground">Available Balance</div>
-                </div>
-                
-                <div className="space-y-4">
+                </CardContent>
+              </Card>
+
+              {/* Stripe Express Connection */}
+              <Card className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Stripe Express Connection
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <XCircle className="h-5 w-5 text-destructive" />
+                      <div>
+                        <p className="font-medium text-foreground">Not Connected</p>
+                        <p className="text-sm text-muted-foreground">Set up your payout account to receive rewards</p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Button variant="hero" size="lg" className="w-full">
-                    <Coins className="h-4 w-4 mr-2" />
-                    Withdraw Funds
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Set Up Payouts with Stripe
                   </Button>
+                  
+                  {/* Alternative connected state - uncomment when connected */}
+                  {/* 
+                  <div className="flex items-center justify-between p-4 bg-success/10 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-success" />
+                      <div>
+                        <p className="font-medium text-foreground">Connected</p>
+                        <p className="text-sm text-muted-foreground">Your Stripe Express account is active</p>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Button variant="outline" size="lg" className="w-full">
-                    View Transaction History
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Go to Stripe Dashboard
                   </Button>
-                </div>
-                
-                <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                  <h4 className="font-semibold text-foreground mb-2">Pending Winnings</h4>
-                  <p className="text-sm text-muted-foreground">
-                    You have £45.00 in pending winnings from active prize draws that will be available once the rounds conclude.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  */}
+                </CardContent>
+              </Card>
+
+              {/* Recent Rewards Preview */}
+              <Card className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    Recent Rewards
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground text-sm">Round 12 Prize</p>
+                      <p className="text-xs text-muted-foreground">EcoTrack Validation</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-primary">£15.00</p>
+                      <Badge variant="secondary" className="text-xs">Pending</Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground text-sm">Round 8 Prize</p>
+                      <p className="text-xs text-muted-foreground">DevSync Feedback</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-success">£67.50</p>
+                      <Badge variant="default" className="text-xs">Paid</Badge>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="font-medium text-foreground text-sm">Round 6 Prize</p>
+                      <p className="text-xs text-muted-foreground">MindfulAI Review</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm text-accent">£30.00</p>
+                      <Badge variant="secondary" className="text-xs">Released to Stripe</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Footer Note */}
+              <div className="text-center p-4 bg-muted/20 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  All payouts are handled by Stripe Express. Validated by Users does not hold or store funds directly.
+                </p>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
