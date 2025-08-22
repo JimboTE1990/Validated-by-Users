@@ -17,12 +17,21 @@ const Auth = () => {
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showRegistrationLoading, setShowRegistrationLoading] = useState(false);
   const [showResetLoading, setShowResetLoading] = useState(false);
+  const [showConfirmationSuccess, setShowConfirmationSuccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
-  // Check if user is already authenticated
+  // Check if user is already authenticated and handle confirmation
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isConfirmed = urlParams.get('confirmed');
+    
+    if (isConfirmed === 'true') {
+      setShowConfirmationSuccess(true);
+      return;
+    }
+    
     if (!authLoading && user) {
       navigate("/dashboard");
     }
@@ -91,9 +100,26 @@ const Auth = () => {
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', registerForm.email)
+        .single();
+
+      if (existingUser) {
+        toast({
+          title: "Account already exists",
+          description: "An account with this email already exists. Please sign in instead.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const redirectUrl = `${window.location.origin}/auth?confirmed=true`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: registerForm.email,
         password: registerForm.password,
         options: {
@@ -106,11 +132,20 @@ const Auth = () => {
       });
 
       if (error) {
-        toast({
-          title: "Registration failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        // Handle specific duplicate email error
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          toast({
+            title: "Account already exists",
+            description: "An account with this email already exists. Please sign in instead.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Registration failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         return;
       }
 
@@ -193,6 +228,25 @@ const Auth = () => {
           setShowResetLoading(false);
           setShowPasswordReset(false);
           setResetEmail("");
+        }}
+      />
+    );
+  }
+
+  // Email confirmation success screen
+  if (showConfirmationSuccess) {
+    return (
+      <LoadingScreen
+        title="Registration Confirmed!"
+        description="Your account has been successfully verified. Redirecting to dashboard..."
+        autoComplete
+        completionDelay={3000}
+        onComplete={() => {
+          toast({
+            title: "Welcome aboard!",
+            description: "Your account is now active. Welcome to Validated by Users!",
+          });
+          navigate("/dashboard");
         }}
       />
     );
