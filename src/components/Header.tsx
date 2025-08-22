@@ -1,53 +1,33 @@
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-    };
-    
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    if (error) {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/");
+    } catch (error) {
       toast({
         title: "Sign out failed",
-        description: error.message,
+        description: "An error occurred while signing out.",
         variant: "destructive",
       });
-      return;
     }
-
-    setIsAuthenticated(false);
-    toast({
-      title: "Signed out",
-      description: "You have been successfully signed out.",
-    });
-    navigate("/");
   };
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
+    if (user) {
       navigate("/dashboard");
     } else {
       navigate("/auth");
@@ -72,7 +52,7 @@ const Header = () => {
           <Link to="/feed" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
             Discover
           </Link>
-          {isAuthenticated ? (
+          {user ? (
             <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
               Profile
             </Link>
@@ -83,7 +63,7 @@ const Header = () => {
           )}
           
           <div className="flex items-center space-x-2">
-            {isAuthenticated ? (
+            {user ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>

@@ -9,23 +9,24 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import LoadingScreen from "@/components/LoadingScreen";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [showRegistrationLoading, setShowRegistrationLoading] = useState(false);
+  const [showResetLoading, setShowResetLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   // Check if user is already authenticated
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard");
-      }
-    };
-    checkAuth();
-  }, [navigate]);
+    if (!authLoading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, authLoading, navigate]);
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({ 
@@ -113,11 +114,8 @@ const Auth = () => {
         return;
       }
 
-      toast({
-        title: "Account created!",
-        description: "Welcome to Validated by Users. You can now access your dashboard.",
-      });
-      navigate("/dashboard");
+      // Show registration success loading screen
+      setShowRegistrationLoading(true);
     } catch (error) {
       toast({
         title: "Registration failed",
@@ -147,12 +145,8 @@ const Auth = () => {
         return;
       }
 
-      toast({
-        title: "Reset link sent!",
-        description: "Check your email for password reset instructions.",
-      });
-      setShowPasswordReset(false);
-      setResetEmail("");
+      // Show reset success loading screen
+      setShowResetLoading(true);
     } catch (error) {
       toast({
         title: "Reset failed",
@@ -163,6 +157,46 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  // Registration success loading screen
+  if (showRegistrationLoading) {
+    return (
+      <LoadingScreen
+        title="Creating Your Account"
+        description="Setting up your profile and dashboard..."
+        autoComplete
+        completionDelay={2500}
+        onComplete={() => {
+          toast({
+            title: "Account created!",
+            description: "Welcome to Validated by Users. You can now access your dashboard.",
+          });
+          navigate("/dashboard");
+        }}
+      />
+    );
+  }
+
+  // Password reset loading screen
+  if (showResetLoading) {
+    return (
+      <LoadingScreen
+        title="Sending Reset Link"
+        description="We're sending a password reset link to your email..."
+        autoComplete
+        completionDelay={2000}
+        onComplete={() => {
+          toast({
+            title: "Reset link sent!",
+            description: "Check your email for password reset instructions.",
+          });
+          setShowResetLoading(false);
+          setShowPasswordReset(false);
+          setResetEmail("");
+        }}
+      />
+    );
+  }
 
   if (showPasswordReset) {
     return (

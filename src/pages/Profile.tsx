@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useProfile } from "@/hooks/useProfile";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Trophy, 
   MessageCircle, 
@@ -46,25 +46,19 @@ const Profile = () => {
     email: ""
   });
 
-  // Get current user and fetch profile
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const { profile, activities, loading, error, updateProfile } = useProfile(currentUser?.id);
+  const { user } = useAuth();
+  const { profile, activities, loading, error, updateProfile } = useProfile(user?.id);
 
-  // Get current user on component mount
+  // Update userInfo when profile data is available
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUser(user);
-      if (user && profile) {
-        setUserInfo({
-          firstName: profile.first_name || "",
-          lastName: profile.last_name || "",
-          email: user.email || ""
-        });
-      }
-    };
-    getCurrentUser();
-  }, [profile]);
+    if (user && profile) {
+      setUserInfo({
+        firstName: profile.first_name || "",
+        lastName: profile.last_name || "",
+        email: user.email || ""
+      });
+    }
+  }, [user, profile]);
 
   const handleSave = async () => {
     try {
@@ -92,13 +86,13 @@ const Profile = () => {
       setUserInfo({
         firstName: profile.first_name || "",
         lastName: profile.last_name || "",
-        email: currentUser?.email || ""
+        email: user?.email || ""
       });
     }
     setIsEditing(false);
   };
 
-  if (loading || !currentUser) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

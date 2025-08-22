@@ -1,8 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,35 +29,8 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const { profile, activities, loading } = useProfile(currentUser?.id);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
-      
-      setCurrentUser(session.user);
-    };
-    
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate("/auth");
-      } else {
-        setCurrentUser(session.user);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  const { user } = useAuth();
+  const { profile, activities, loading } = useProfile(user?.id);
 
   // Comprehensive feedback and activity history
   const feedbackHistory = [
@@ -200,7 +171,7 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {profile?.first_name || currentUser?.email?.split('@')[0] || 'User'}!
+            Welcome back, {profile?.first_name || user?.email?.split('@')[0] || 'User'}!
           </h1>
           <p className="text-muted-foreground">
             Track your feedback history and manage your active prize pool entries
