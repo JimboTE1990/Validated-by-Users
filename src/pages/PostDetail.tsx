@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import Header from "@/components/Header";
+import { usePost } from "@/hooks/usePosts";
 import { 
   Trophy, 
   Clock, 
   MessageCircle, 
-  ThumbsUp, 
   Star, 
   Send,
   TrendingUp,
@@ -21,58 +20,44 @@ import {
   ImageIcon
 } from "lucide-react";
 
-// Mock post data
-const mockPost = {
-  id: "1",
-  title: "EcoTrack - Personal Carbon Footprint App",
-  description: "A sleek mobile app that helps users track their daily carbon footprint through smart integrations with transport, energy, and shopping habits. Our goal is to make environmental awareness accessible and actionable for everyone.",
-  fullDescription: "EcoTrack is designed to be the most user-friendly carbon tracking app on the market. We integrate with popular transport apps, energy providers, and shopping platforms to automatically calculate your environmental impact. The app features beautiful visualizations, personalized recommendations, and social challenges to make sustainability engaging and fun.",
-  prizePool: 250,
-  timeLeft: "2 days, 14 hours",
-  commentCount: 47,
-  category: "Environment",
-  authorName: "Sarah Chen",
-  authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-  entries: 47,
-  maxEntries: 100
+const getTimeLeft = (endDate: string) => {
+  const now = new Date();
+  const end = new Date(endDate);
+  const diff = end.getTime() - now.getTime();
+  
+  if (diff <= 0) return "Ended";
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''}, ${hours} hour${hours > 1 ? 's' : ''} left`;
+  } else {
+    return `${hours} hour${hours > 1 ? 's' : ''} left`;
+  }
 };
 
-// Mock comments
-const mockComments = [
-  {
-    id: "1",
-    user: "Alex Thompson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex-t",
-    comment: "Love the concept! The automatic tracking feature would be a game-changer. Have you considered partnering with public transport apps for more accurate data?",
-    likes: 12,
-    boosted: true,
-    timestamp: "2 hours ago"
-  },
-  {
-    id: "2", 
-    user: "Maria Rodriguez",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
-    comment: "This addresses a real problem. The social challenges aspect could really drive engagement. What about gamification with rewards for hitting eco-friendly milestones?",
-    likes: 8,
-    boosted: true,
-    timestamp: "4 hours ago"
-  },
-  {
-    id: "3",
-    user: "James Wilson",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=james",
-    comment: "Great initiative! Would be helpful to see comparisons with local/national averages. Also consider adding tips for reducing footprint based on user's specific patterns.",
-    likes: 6,
-    boosted: false,
-    timestamp: "6 hours ago"
-  }
-];
+const getRelativeTime = (dateString: string) => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = now.getTime() - date.getTime();
+  
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+};
 
 const PostDetail = () => {
   const { id } = useParams();
   const [feedback, setFeedback] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  const { post, loading, error } = usePost(id || '');
 
   const handleSubmitFeedback = () => {
     if (feedback.trim() && agreedToTerms) {
@@ -82,7 +67,35 @@ const PostDetail = () => {
     }
   };
 
-  const progressPercentage = (mockPost.entries / mockPost.maxEntries) * 100;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-muted-foreground">Loading post...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-destructive">
+              {error || 'Post not found'}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const progressPercentage = (post.current_entries / post.max_entries) * 100;
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,26 +110,28 @@ const PostDetail = () => {
               <CardHeader>
                 <div className="flex items-start justify-between mb-4">
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-                    {mockPost.category}
+                    {post.category.name}
                   </Badge>
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    <span>{mockPost.timeLeft}</span>
+                    <span>{getTimeLeft(post.end_date)}</span>
                   </div>
                 </div>
                 
                 <CardTitle className="text-3xl font-bold text-foreground mb-4">
-                  {mockPost.title}
+                  {post.title}
                 </CardTitle>
                 
                 <div className="flex items-center space-x-4">
                   <img 
-                    src={mockPost.authorAvatar} 
-                    alt={mockPost.authorName}
+                    src={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
+                    alt={`${post.author.first_name} ${post.author.last_name}`}
                     className="h-10 w-10 rounded-full border-2 border-primary/20"
                   />
                   <div>
-                    <div className="font-semibold text-foreground">{mockPost.authorName}</div>
+                    <div className="font-semibold text-foreground">
+                      {post.author.first_name} {post.author.last_name}
+                    </div>
                     <div className="text-sm text-muted-foreground">Founder</div>
                   </div>
                 </div>
@@ -124,19 +139,19 @@ const PostDetail = () => {
               
               <CardContent>
                 <p className="text-muted-foreground mb-6 leading-relaxed">
-                  {mockPost.fullDescription}
+                  {post.full_description || post.description}
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-success mb-1">
-                      £{mockPost.prizePool.toLocaleString()}
+                      £{post.prize_pool.toLocaleString()}
                     </div>
                     <div className="text-sm text-muted-foreground">Prize Pool</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary mb-1">
-                      {mockPost.commentCount}
+                      {post.current_entries}
                     </div>
                     <div className="text-sm text-muted-foreground">Entries</div>
                   </div>
@@ -153,48 +168,54 @@ const PostDetail = () => {
                 {/* App Link */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-3">Try the App</h3>
-                  <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
-                    <Globe className="h-5 w-5 text-primary flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <a 
-                        href="https://ecotrack-app.com" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:text-primary/80 transition-colors font-medium break-all"
-                      >
-                        https://ecotrack-app.com
-                      </a>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Click to open the app in a new tab
-                      </p>
+                  {post.product_link ? (
+                    <div className="flex items-center gap-3 p-4 rounded-lg border bg-card">
+                      <Globe className="h-5 w-5 text-primary flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <a 
+                          href={post.product_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary/80 transition-colors font-medium break-all"
+                        >
+                          {post.product_link}
+                        </a>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Click to open the app in a new tab
+                        </p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  </div>
+                  ) : (
+                    <div className="p-4 rounded-lg border bg-muted/30 text-center">
+                      <p className="text-sm text-muted-foreground">No product link available</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Images/Media */}
                 <div>
                   <h3 className="font-semibold text-foreground mb-3">Product Images</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {post.images && post.images.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {post.images.map((image) => (
+                        <div key={image.id} className="aspect-video rounded-lg border overflow-hidden">
+                          <img 
+                            src={image.image_url} 
+                            alt={`Product ${image.image_type}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
                     <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center">
                       <div className="text-center text-muted-foreground">
                         <ImageIcon className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">App Screenshot 1</p>
+                        <p className="text-sm">No images available</p>
                       </div>
                     </div>
-                    <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center">
-                      <div className="text-center text-muted-foreground">
-                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">App Screenshot 2</p>
-                      </div>
-                    </div>
-                    <div className="aspect-video rounded-lg border-2 border-dashed border-border bg-muted/50 flex items-center justify-center md:col-span-2">
-                      <div className="text-center text-muted-foreground">
-                        <ImageIcon className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">Product Demo Video</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -204,37 +225,48 @@ const PostDetail = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5 text-primary" />
-                  Feedback & Entries ({mockComments.length})
+                  Feedback & Entries ({post.comments?.length || 0})
                 </CardTitle>
               </CardHeader>
               
               <CardContent className="space-y-6">
-                {mockComments.map((comment) => (
-                  <div key={comment.id} className="border-b border-border/50 pb-6 last:border-b-0">
-                    <div className="flex items-start space-x-4">
-                      <img 
-                        src={comment.avatar} 
-                        alt={comment.user}
-                        className="h-8 w-8 rounded-full border border-border/50"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-semibold text-foreground">{comment.user}</span>
-                          {comment.boosted && (
-                            <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
-                              <Star className="h-3 w-3 mr-1" />
-                              Boosted
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground">{comment.timestamp}</span>
+                {post.comments && post.comments.length > 0 ? (
+                  post.comments.map((comment) => (
+                    <div key={comment.id} className="border-b border-border/50 pb-6 last:border-b-0">
+                      <div className="flex items-start space-x-4">
+                        <img 
+                          src={comment.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.user.first_name}`}
+                          alt={`${comment.user.first_name} ${comment.user.last_name}`}
+                          className="h-8 w-8 rounded-full border border-border/50"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="font-semibold text-foreground">
+                              {comment.user.first_name} {comment.user.last_name}
+                            </span>
+                            {comment.is_boosted && (
+                              <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
+                                <Star className="h-3 w-3 mr-1" />
+                                Boosted
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {getRelativeTime(comment.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
+                            {comment.content}
+                          </p>
                         </div>
-                        <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
-                          {comment.comment}
-                        </p>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No feedback yet. Be the first to comment!</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
@@ -341,7 +373,7 @@ const PostDetail = () => {
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Participants</span>
                   </div>
-                  <span className="font-semibold text-foreground">{mockPost.entries}</span>
+                  <span className="font-semibold text-foreground">{post.current_entries}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -355,7 +387,9 @@ const PostDetail = () => {
                     <Star className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Boosted Comments</span>
                   </div>
-                  <span className="font-semibold text-accent">2</span>
+                  <span className="font-semibold text-accent">
+                    {post.comments?.filter(c => c.is_boosted).length || 0}
+                  </span>
                 </div>
               </CardContent>
             </Card>

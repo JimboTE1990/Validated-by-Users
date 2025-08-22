@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Trophy, 
   MessageCircle, 
   TrendingUp, 
   Award,
   Calendar,
-  Coins,
+  ExternalLink,
   Star,
   History,
   Edit,
@@ -21,111 +23,111 @@ import {
   X
 } from "lucide-react";
 
-// Mock user data
-const mockUser = {
-  firstName: "Alex",
-  lastName: "Thompson", 
-  email: "alex@example.com",
-  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex-profile",
-  joinDate: "March 2024",
-  totalEntries: 23,
-  totalWinnings: 87.50,
-  activePools: 5,
-  totalFeedback: 23
+const getRelativeTime = (dateString: string) => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diff = now.getTime() - date.getTime();
+  
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
 };
-
-// Mock activity data
-const mockActivity = [
-  {
-    id: "1",
-    type: "comment",
-    title: "EcoTrack - Personal Carbon Footprint App",
-    reward: "£250 Pool Entry",
-    date: "2 hours ago",
-    status: "pending"
-  },
-  {
-    id: "2",
-    type: "win",
-    title: "DevSync - Real-time Code Collaboration", 
-    reward: "£67.50 Won",
-    date: "3 days ago",
-    status: "completed"
-  },
-  {
-    id: "3",
-    type: "comment",
-    title: "MindfulAI - Mental Health Companion",
-    reward: "£100 Pool Entry",
-    date: "5 days ago", 
-    status: "pending"
-  },
-  {
-    id: "4",
-    type: "boost",
-    title: "InvestWise - Beginner-Friendly Trading",
-    reward: "+3 Bonus Entries",
-    date: "1 week ago",
-    status: "completed"
-  }
-];
-
-const mockParticipations = [
-  {
-    id: "1",
-    title: "EcoTrack - Personal Carbon Footprint App",
-    category: "Environment",
-    prizePool: 250,
-    entries: 1,
-    status: "Active",
-    timeLeft: "2 days left"
-  },
-  {
-    id: "2",
-    title: "MindfulAI - Mental Health Companion", 
-    category: "Health & Wellness",
-    prizePool: 100,
-    entries: 2,
-    status: "Active", 
-    timeLeft: "1 day left"
-  },
-  {
-    id: "3",
-    title: "LocalConnect - Neighborhood Community Hub",
-    category: "Social",
-    prizePool: 75,
-    entries: 1,
-    status: "Active",
-    timeLeft: "3 days left"
-  }
-];
 
 const Profile = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    firstName: mockUser.firstName,
-    lastName: mockUser.lastName,
-    email: mockUser.email
+    firstName: "",
+    lastName: "",
+    email: ""
   });
 
-  const handleSave = () => {
-    // In a real app, this would make an API call to update user info
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been successfully updated.",
-    });
-    setIsEditing(false);
+  // Get current user and fetch profile
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { profile, activities, loading, error, updateProfile } = useProfile(currentUser?.id);
+
+  // Get current user on component mount
+  useState(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      if (user && profile) {
+        setUserInfo({
+          firstName: profile.first_name || "",
+          lastName: profile.last_name || "",
+          email: user.email || ""
+        });
+      }
+    };
+    getCurrentUser();
+  });
+
+  const handleSave = async () => {
+    try {
+      await updateProfile({
+        first_name: userInfo.firstName,
+        last_name: userInfo.lastName
+      });
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been successfully updated.",
+      });
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCancel = () => {
-    setUserInfo({
-      firstName: mockUser.firstName,
-      lastName: mockUser.lastName,
-      email: mockUser.email
-    });
+    if (profile) {
+      setUserInfo({
+        firstName: profile.first_name || "",
+        lastName: profile.last_name || "",
+        email: currentUser?.email || ""
+      });
+    }
     setIsEditing(false);
   };
+
+  if (loading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-muted-foreground">Loading profile...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-destructive">
+              Please log in to view your profile
+            </div>
+            <Button variant="outline" className="mt-4" onClick={() => window.location.href = '/auth'}>
+              Go to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,7 +137,7 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="text-center mb-12">
           <img 
-            src={mockUser.avatar} 
+            src={profile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.first_name}`}
             alt={`${userInfo.firstName} ${userInfo.lastName}`}
             className="h-24 w-24 rounded-full border-4 border-primary/20 mx-auto mb-4"
           />
@@ -166,8 +168,12 @@ const Profile = () => {
                   id="email"
                   type="email"
                   value={userInfo.email}
-                  onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
+                  disabled
+                  className="bg-muted"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email cannot be changed from profile settings
+                </p>
               </div>
               <div className="flex space-x-2 justify-center">
                 <Button onClick={handleSave} size="sm">
@@ -189,7 +195,10 @@ const Profile = () => {
               <div className="flex items-center justify-center space-x-4 mb-4">
                 <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
                   <Calendar className="h-3 w-3 mr-1" />
-                  Joined {mockUser.joinDate}
+                  Joined {new Date(profile.created_at).toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
                 </Badge>
                 <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                   <Edit className="h-4 w-4 mr-2" />
@@ -206,7 +215,7 @@ const Profile = () => {
             <CardContent className="p-6">
               <Trophy className="h-8 w-8 text-success mx-auto mb-2" />
               <div className="text-2xl font-bold text-foreground mb-1">
-                £{mockUser.totalWinnings.toFixed(2)}
+                £{profile.total_winnings.toFixed(2)}
               </div>
               <div className="text-sm text-muted-foreground">Total Winnings</div>
             </CardContent>
@@ -216,7 +225,7 @@ const Profile = () => {
             <CardContent className="p-6">
               <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
               <div className="text-2xl font-bold text-foreground mb-1">
-                {mockUser.totalEntries}
+                {profile.total_entries}
               </div>
               <div className="text-sm text-muted-foreground">Total Entries</div>
             </CardContent>
@@ -226,7 +235,7 @@ const Profile = () => {
             <CardContent className="p-6">
               <TrendingUp className="h-8 w-8 text-accent mx-auto mb-2" />
               <div className="text-2xl font-bold text-foreground mb-1">
-                {mockUser.activePools}
+                0
               </div>
               <div className="text-sm text-muted-foreground">Active Pools</div>
             </CardContent>
@@ -236,7 +245,7 @@ const Profile = () => {
             <CardContent className="p-6">
               <Award className="h-8 w-8 text-warning mx-auto mb-2" />
               <div className="text-2xl font-bold text-foreground mb-1">
-                {mockUser.totalFeedback}
+                {profile.total_feedback}
               </div>
               <div className="text-sm text-muted-foreground">Feedback Given</div>
             </CardContent>
@@ -245,18 +254,14 @@ const Profile = () => {
         
         {/* Content Tabs */}
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
             <TabsTrigger value="activity">
               <History className="h-4 w-4 mr-2" />
               Activity
             </TabsTrigger>
-            <TabsTrigger value="participations">
-              <Trophy className="h-4 w-4 mr-2" />
-              Active Pools
-            </TabsTrigger>
-            <TabsTrigger value="wallet">
-              <Coins className="h-4 w-4 mr-2" />
-              Wallet
+            <TabsTrigger value="payouts">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Payouts
             </TabsTrigger>
           </TabsList>
           
@@ -266,114 +271,90 @@ const Profile = () => {
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        activity.type === 'win' ? 'bg-success/10' : 
-                        activity.type === 'boost' ? 'bg-accent/10' : 'bg-primary/10'
-                      }`}>
-                        {activity.type === 'win' ? (
-                          <Trophy className="h-5 w-5 text-success" />
-                        ) : activity.type === 'boost' ? (
-                          <Star className="h-5 w-5 text-accent" />
-                        ) : (
-                          <MessageCircle className="h-5 w-5 text-primary" />
-                        )}
+                {activities.length > 0 ? (
+                  activities.map((activity) => (
+                    <div key={activity.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                          activity.activity_type === 'win' ? 'bg-success/10' : 
+                          activity.activity_type === 'boost' ? 'bg-accent/10' : 'bg-primary/10'
+                        }`}>
+                          {activity.activity_type === 'win' ? (
+                            <Trophy className="h-5 w-5 text-success" />
+                          ) : activity.activity_type === 'boost' ? (
+                            <Star className="h-5 w-5 text-accent" />
+                          ) : (
+                            <MessageCircle className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground text-sm">{activity.post.title}</div>
+                          <div className="text-xs text-muted-foreground">{getRelativeTime(activity.created_at)}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium text-foreground text-sm">{activity.title}</div>
-                        <div className="text-xs text-muted-foreground">{activity.date}</div>
+                      <div className="text-right">
+                        <div className={`font-semibold text-sm ${
+                          activity.activity_type === 'win' ? 'text-success' : 'text-primary'
+                        }`}>
+                          {activity.reward_description || `${activity.activity_type} activity`}
+                        </div>
+                        <Badge 
+                          variant={activity.status === 'completed' ? 'default' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {activity.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`font-semibold text-sm ${
-                        activity.type === 'win' ? 'text-success' : 'text-primary'
-                      }`}>
-                        {activity.reward}
-                      </div>
-                      <Badge 
-                        variant={activity.status === 'completed' ? 'default' : 'secondary'}
-                        className="text-xs"
-                      >
-                        {activity.status}
-                      </Badge>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No activity yet. Start participating in validation rounds!</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </TabsContent>
           
-          <TabsContent value="participations" className="space-y-4">
-            <div className="grid gap-4">
-              {mockParticipations.map((participation) => (
-                <Card key={participation.id} className="border-0 bg-gradient-card shadow-sm">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-                        {participation.category}
-                      </Badge>
-                      <div className="text-sm text-muted-foreground">{participation.timeLeft}</div>
-                    </div>
-                    
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {participation.title}
-                    </h3>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-center">
-                          <div className="text-xl font-bold text-success">
-                            £{participation.prizePool}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Prize Pool</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-xl font-bold text-primary">
-                            {participation.entries}
-                          </div>
-                          <div className="text-xs text-muted-foreground">Your Entries</div>
-                        </div>
-                      </div>
-                      
-                      <Button variant="outline" size="sm">
-                        View Details
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="wallet" className="space-y-4">
+          <TabsContent value="payouts" className="space-y-4">
             <Card className="border-0 bg-gradient-card shadow-sm">
               <CardHeader>
-                <CardTitle>Prize Wallet</CardTitle>
+                <CardTitle>Your Payouts</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Rewards are securely paid out through Stripe Express.
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="text-center mb-8">
                   <div className="text-4xl font-bold text-success mb-2">
-                    £{mockUser.totalWinnings.toFixed(2)}
+                    £{profile.total_winnings.toFixed(2)}
                   </div>
-                  <div className="text-muted-foreground">Available Balance</div>
+                  <div className="text-muted-foreground">Pending Rewards</div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    These are prize pool rewards awaiting release once rounds conclude.
+                  </p>
                 </div>
                 
                 <div className="space-y-4">
-                  <Button variant="hero" size="lg" className="w-full">
-                    <Coins className="h-4 w-4" />
-                    Withdraw Funds
-                  </Button>
-                  <Button variant="outline" size="lg" className="w-full">
-                    View Transaction History
-                  </Button>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Stripe Express Status</span>
+                      <Badge variant="secondary">❌ Not Connected</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Connect your Stripe Express account to receive payouts
+                    </p>
+                    <Button variant="hero" size="sm" className="w-full">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Set Up Payouts with Stripe
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                  <h4 className="font-semibold text-foreground mb-2">Pending Winnings</h4>
-                  <p className="text-sm text-muted-foreground">
-                    You have £45.00 in pending winnings from active prize draws that will be available once the rounds conclude.
+                  <p className="text-xs text-muted-foreground text-center">
+                    All payouts are handled by Stripe Express. Validated with Users does not hold or store funds directly.
                   </p>
                 </div>
               </CardContent>

@@ -1,93 +1,77 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import PostCard from "@/components/PostCard";
 import { Search, Filter, TrendingUp } from "lucide-react";
+import { usePosts } from "@/hooks/usePosts";
+import { useCategories } from "@/hooks/useCategories";
 
-// Mock data for posts
-const mockPosts = [
-  {
-    id: "1",
-    title: "EcoTrack - Personal Carbon Footprint App",
-    description: "A sleek mobile app that helps users track their daily carbon footprint through smart integrations with transport, energy, and shopping habits.",
-    prizePool: 250,
-    timeLeft: "2 days left",
-    commentCount: 47,
-    category: "Environment",
-    authorName: "Sarah Chen",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah"
-  },
-  {
-    id: "2", 
-    title: "DevSync - Real-time Code Collaboration",
-    description: "Revolutionary platform enabling developers to collaborate on code in real-time with AI-powered conflict resolution and seamless version control.",
-    prizePool: 500,
-    timeLeft: "5 hours left",
-    commentCount: 123,
-    category: "Developer Tools",
-    authorName: "Alex Rodriguez",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=alex"
-  },
-  {
-    id: "3",
-    title: "MindfulAI - Mental Health Companion",
-    description: "AI-powered mental health companion that provides personalized meditation, mood tracking, and therapeutic exercises based on cognitive behavioral therapy.",
-    prizePool: 100,
-    timeLeft: "1 day left", 
-    commentCount: 89,
-    category: "Health & Wellness",
-    authorName: "Dr. Emily Watson",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emily"
-  },
-  {
-    id: "4",
-    title: "LocalConnect - Neighborhood Community Hub",
-    description: "Hyperlocal social platform connecting neighbors for skill sharing, local events, borrowing items, and building stronger communities.",
-    prizePool: 75,
-    timeLeft: "3 days left",
-    commentCount: 34,
-    category: "Social",
-    authorName: "Marcus Johnson",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=marcus"
-  },
-  {
-    id: "5",
-    title: "InvestWise - Beginner-Friendly Trading",
-    description: "Simplified investment platform with educational content, risk assessment, and automated portfolio balancing for first-time investors.",
-    prizePool: 1000,
-    timeLeft: "6 hours left",
-    commentCount: 267,
-    category: "Finance",
-    authorName: "Jennifer Kim",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=jennifer"
-  },
-  {
-    id: "6",
-    title: "FoodRescue - Reduce Restaurant Waste",
-    description: "App connecting restaurants with surplus food to local charities and consumers at discounted prices, reducing waste while helping communities.",
-    prizePool: 150,
-    timeLeft: "4 days left",
-    commentCount: 56,
-    category: "Social Impact",
-    authorName: "David Park",
-    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=david"
+const getTimeLeft = (endDate: string) => {
+  const now = new Date();
+  const end = new Date(endDate);
+  const diff = end.getTime() - now.getTime();
+  
+  if (diff <= 0) return "Ended";
+  
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''} left`;
+  } else {
+    return `${hours} hour${hours > 1 ? 's' : ''} left`;
   }
-];
-
-const categories = ["All", "Tech", "Health & Wellness", "Finance", "Environment", "Social", "Developer Tools", "Social Impact"];
+};
 
 const Feed = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  
+  const { posts, loading, error } = usePosts();
+  const { categories } = useCategories();
 
-  const filteredPosts = mockPosts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const categoryNames = useMemo(() => 
+    ["All", ...categories.map(cat => cat.name)], 
+    [categories]
+  );
+
+  const filteredPosts = useMemo(() => 
+    posts.filter(post => {
+      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           post.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "All" || post.category.name === selectedCategory;
+      return matchesSearch && matchesCategory;
+    }), 
+    [posts, searchQuery, selectedCategory]
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-muted-foreground">Loading posts...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center">
+            <div className="text-lg text-destructive">Error loading posts: {error}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +106,7 @@ const Feed = () => {
           
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
+            {categoryNames.map((category) => (
               <Badge
                 key={category}
                 variant={selectedCategory === category ? "default" : "secondary"}
@@ -147,13 +131,13 @@ const Feed = () => {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-success">
-              £{filteredPosts.reduce((sum, post) => sum + post.prizePool, 0).toLocaleString()}
+              £{filteredPosts.reduce((sum, post) => sum + post.prize_pool, 0).toLocaleString()}
             </div>
             <div className="text-sm text-muted-foreground">Total Prizes</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-accent">
-              {filteredPosts.reduce((sum, post) => sum + post.commentCount, 0)}
+              {filteredPosts.reduce((sum, post) => sum + post.current_entries, 0)}
             </div>
             <div className="text-sm text-muted-foreground">Total Entries</div>
           </div>
@@ -162,7 +146,18 @@ const Feed = () => {
         {/* Posts Grid */}
         <div className="grid lg:grid-cols-2 gap-6">
           {filteredPosts.map((post) => (
-            <PostCard key={post.id} {...post} />
+            <PostCard 
+              key={post.id} 
+              id={post.id}
+              title={post.title}
+              description={post.description}
+              prizePool={post.prize_pool}
+              timeLeft={getTimeLeft(post.end_date)}
+              commentCount={post.current_entries}
+              category={post.category.name}
+              authorName={`${post.author.first_name} ${post.author.last_name}`}
+              authorAvatar={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
+            />
           ))}
         </div>
         

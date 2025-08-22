@@ -12,31 +12,96 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { useCategories } from "@/hooks/useCategories";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const CreatePost = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { categories } = useCategories();
+  
   const [formData, setFormData] = useState({
+    title: "",
     description: "",
     productLink: "",
     prizePool: "",
-    duration: ""
+    duration: "",
+    categoryId: ""
   });
   const [scheduleDate, setScheduleDate] = useState<Date>();
   const [scheduleTime, setScheduleTime] = useState("");
   const [images, setImages] = useState<FileList | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Navigate to terms and conditions page
-    navigate('/terms-conditions', { 
-      state: { 
-        formData, 
-        scheduleDate, 
-        scheduleTime,
-        prizePool: parseFloat(formData.prizePool) || 0
-      } 
-    });
+    if (!scheduleDate || !scheduleTime) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a schedule date and time.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to create a post.",
+          variant: "destructive"
+        });
+        navigate('/auth');
+        return;
+      }
+
+      // Calculate end date based on duration
+      const startDate = new Date(`${format(scheduleDate, 'yyyy-MM-dd')}T${scheduleTime}`);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + parseInt(formData.duration));
+
+      // Create post
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          product_link: formData.productLink || null,
+          prize_pool: parseFloat(formData.prizePool),
+          category_id: formData.categoryId,
+          author_id: user.id,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (postError) throw postError;
+
+      toast({
+        title: "Post Created Successfully!",
+        description: "Your validation round has been created and is now live."
+      });
+
+      navigate(`/post/${post.id}`);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      toast({
+        title: "Failed to Create Post",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -65,6 +130,17 @@ const CreatePost = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
+                  <Label htmlFor="title">Product/Startup Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter your product or startup name..."
+                    value={formData.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="description">Description of Startup/Product</Label>
                   <Textarea
                     id="description"
@@ -74,6 +150,26 @@ const CreatePost = () => {
                     className="min-h-[120px]"
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select 
+                    value={formData.categoryId} 
+                    onValueChange={(value) => handleInputChange("categoryId", value)} 
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -185,8 +281,14 @@ const CreatePost = () => {
                 </div>
 
                 <div className="flex justify-end pt-4">
-                  <Button type="submit" variant="hero" size="lg" className="min-w-[160px]">
-                    Next: Terms & Conditions
+                  <Button 
+                    type="submit" 
+                    variant="hero" 
+                    size="lg" 
+                    className="min-w-[160px]"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Creating..." : "Create Post"}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
