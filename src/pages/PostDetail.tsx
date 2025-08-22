@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import { usePost } from "@/hooks/usePosts";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Trophy, 
   Clock, 
@@ -17,7 +20,8 @@ import {
   CheckCircle,
   Globe,
   ExternalLink,
-  ImageIcon
+  ImageIcon,
+  Zap
 } from "lucide-react";
 
 const getTimeLeft = (endDate: string) => {
@@ -56,16 +60,104 @@ const PostDetail = () => {
   const [feedback, setFeedback] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [boostedComments, setBoostedComments] = useState<Set<string>>(new Set());
   
-  const { post, loading, error } = usePost(id || '');
+  const { post, loading, error, refetch } = usePost(id || '');
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleSubmitFeedback = () => {
-    if (feedback.trim() && agreedToTerms) {
+  const handleSubmitFeedback = async () => {
+    if (!feedback.trim() || !agreedToTerms || !user || !post) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: post.id,
+          user_id: user.id,
+          content: feedback,
+          likes: 0,
+          is_boosted: false
+        });
+
+      if (error) throw error;
+
+      // Create user activity for feedback submission
+      await supabase
+        .from('user_activities')
+        .insert({
+          user_id: user.id,
+          post_id: post.id,
+          activity_type: 'feedback_submission',
+          reward_description: 'Feedback submitted for validation',
+          reward_amount: 0,
+          status: 'pending'
+        });
+
       setHasSubmitted(true);
+      setFeedback("");
       setAgreedToTerms(false);
-      // Here you would normally submit/update to backend
+      refetch();
+      
+      toast({
+        title: "Feedback Submitted!",
+        description: "Your feedback has been submitted and you've been entered into the draw.",
+      });
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleBoostComment = async (commentId: string) => {
+    if (!user || !post || post.author_id !== user.id) return;
+    
+    // Check if already boosted 5 comments
+    if (boostedComments.size >= 5) {
+      toast({
+        title: "Boost Limit Reached",
+        description: "You can only boost up to 5 comments per post.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .update({ is_boosted: true, likes: 3 })
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      setBoostedComments(prev => new Set([...prev, commentId]));
+      refetch();
+      
+      toast({
+        title: "Comment Boosted!",
+        description: "This comment now has +3 entries in the draw.",
+      });
+    } catch (error) {
+      console.error('Error boosting comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to boost comment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const isPostAuthor = user && post && post.author_id === user.id;
+  const canComment = user && !isPostAuthor;
 
   if (loading) {
     return (
@@ -240,19 +332,32 @@ const PostDetail = () => {
                           className="h-8 w-8 rounded-full border border-border/50"
                         />
                         <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <span className="font-semibold text-foreground">
-                              {comment.user.first_name} {comment.user.last_name}
-                            </span>
-                            {comment.is_boosted && (
-                              <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
-                                <Star className="h-3 w-3 mr-1" />
-                                Boosted
-                              </Badge>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-semibold text-foreground">
+                                {comment.user.first_name} {comment.user.last_name}
+                              </span>
+                              {comment.is_boosted && (
+                                <Badge variant="secondary" className="bg-accent/10 text-accent border-0 text-xs">
+                                  <Star className="h-3 w-3 mr-1" />
+                                  Boosted (+3 entries)
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {getRelativeTime(comment.created_at)}
+                              </span>
+                            </div>
+                            {isPostAuthor && !comment.is_boosted && boostedComments.size < 5 && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleBoostComment(comment.id)}
+                                className="text-xs"
+                              >
+                                <Zap className="h-3 w-3 mr-1" />
+                                Boost
+                              </Button>
                             )}
-                            <span className="text-xs text-muted-foreground">
-                              {getRelativeTime(comment.created_at)}
-                            </span>
                           </div>
                           <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
                             {comment.content}
@@ -295,20 +400,18 @@ const PostDetail = () => {
               </CardContent>
             </Card>
             
-            {/* Feedback Form */}
-            <Card id="feedback-form" className="border-0 bg-gradient-card shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {hasSubmitted ? "Edit Your Feedback" : "Leave Feedback"}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {hasSubmitted 
-                    ? "You can edit your feedback during the validation window."
-                    : "Share your thoughts to automatically enter the prize draw!"
-                  }
-                </p>
-              </CardHeader>
-              <CardContent>
+            {/* Feedback Form - Only show if user can comment */}
+            {canComment && (
+              <Card id="feedback-form" className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Leave Feedback
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Share your thoughts to automatically enter the prize draw!
+                  </p>
+                </CardHeader>
+                <CardContent>
                 <div className="space-y-4">
                   {/* Feedback Guidelines */}
                   <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
@@ -351,16 +454,57 @@ const PostDetail = () => {
                   />
                   <Button 
                     onClick={handleSubmitFeedback}
-                    disabled={!feedback.trim() || !agreedToTerms}
+                    disabled={!feedback.trim() || !agreedToTerms || isSubmitting}
                     className="w-full"
                     variant="hero"
                   >
                     <Send className="h-4 w-4" />
-                    {hasSubmitted ? "Update Feedback" : "Submit Feedback and Enter Draw"}
+                    {isSubmitting ? "Submitting..." : "Submit Feedback and Enter Draw"}
                   </Button>
                 </div>
               </CardContent>
             </Card>
+            )}
+
+            {/* Post Author Info - Show if user is the author */}
+            {isPostAuthor && (
+              <Card className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Star className="h-5 w-5 text-accent" />
+                    Post Author Controls
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <span className="text-sm font-medium text-foreground">Boosts Used</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {boostedComments.size}/5
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    You can boost up to 5 comments to give them +3 entries each. As the post author, you cannot leave feedback on your own post.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Not Logged In Message */}
+            {!user && (
+              <Card className="border-0 bg-gradient-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Join the Discussion</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Sign in to leave feedback and enter the prize draw!
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Sign In
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
             
             {/* Stats */}
             <Card className="border-0 bg-gradient-card shadow-sm">
