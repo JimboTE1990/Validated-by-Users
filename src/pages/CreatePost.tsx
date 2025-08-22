@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, ArrowRight, Clock } from "lucide-react";
+import { CalendarIcon, Upload, ArrowRight, Clock, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -15,11 +16,13 @@ import Header from "@/components/Header";
 import { useCategories } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { categories } = useCategories();
+  const { uploadImages, uploading } = useImageUpload();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -29,18 +32,48 @@ const CreatePost = () => {
     duration: "",
     categoryId: ""
   });
+  const [scheduleType, setScheduleType] = useState<"now" | "later">("now");
   const [scheduleDate, setScheduleDate] = useState<Date>();
   const [scheduleTime, setScheduleTime] = useState("");
-  const [images, setImages] = useState<FileList | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      const validFiles = fileArray.filter(file => {
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+        
+        if (!isValidSize) {
+          toast({
+            title: "File Too Large",
+            description: `${file.name} is larger than 10MB`,
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        return isImage || isVideo;
+      });
+      
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!scheduleDate || !scheduleTime) {
+    if (scheduleType === "later" && (!scheduleDate || !scheduleTime)) {
       toast({
         title: "Missing Information",
-        description: "Please select a schedule date and time.",
+        description: "Please select a schedule date and time for scheduled posts.",
         variant: "destructive"
       });
       return;
@@ -62,8 +95,14 @@ const CreatePost = () => {
         return;
       }
 
-      // Calculate end date based on duration
-      const startDate = new Date(`${format(scheduleDate, 'yyyy-MM-dd')}T${scheduleTime}`);
+      // Calculate start and end dates
+      let startDate: Date;
+      if (scheduleType === "now") {
+        startDate = new Date();
+      } else {
+        startDate = new Date(`${format(scheduleDate!, 'yyyy-MM-dd')}T${scheduleTime}`);
+      }
+      
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + parseInt(formData.duration));
 
@@ -86,9 +125,18 @@ const CreatePost = () => {
 
       if (postError) throw postError;
 
+      // Upload images if any
+      if (selectedFiles.length > 0) {
+        const fileList = new DataTransfer();
+        selectedFiles.forEach(file => fileList.items.add(file));
+        await uploadImages(fileList.files, post.id);
+      }
+
       toast({
         title: "Post Created Successfully!",
-        description: "Your validation round has been created and is now live."
+        description: scheduleType === "now" 
+          ? "Your validation round is now live." 
+          : "Your validation round has been scheduled."
       });
 
       navigate(`/post/${post.id}`);
@@ -184,28 +232,48 @@ const CreatePost = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="images">Upload Images</Label>
+                  <Label htmlFor="media">Upload Images/Videos</Label>
                   <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <Input
-                      id="images"
+                      id="media"
                       type="file"
                       multiple
-                      accept="image/*"
-                      onChange={(e) => setImages(e.target.files)}
+                      accept="image/*,video/*"
+                      onChange={handleFileSelection}
                       className="hidden"
                     />
-                    <Label htmlFor="images" className="cursor-pointer">
+                    <Label htmlFor="media" className="cursor-pointer">
                       <span className="text-sm text-muted-foreground">
-                        Click to upload images or drag and drop
+                        Click to upload images/videos or drag and drop
                       </span>
-                    </Label>
-                    {images && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {images.length} file(s) selected
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Max file size: 10MB. Supported: JPG, PNG, GIF, MP4, MOV
                       </p>
-                    )}
+                    </Label>
                   </div>
+                  
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <Label>Selected Files:</Label>
+                      <div className="space-y-2">
+                        {selectedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                            <span className="text-sm truncate flex-1">{file.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(index)}
+                              className="ml-2"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -228,43 +296,67 @@ const CreatePost = () => {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Schedule Post Date/Time</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !scheduleDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {scheduleDate ? format(scheduleDate, "PPP") : "Pick a date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={scheduleDate}
-                          onSelect={setScheduleDate}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <div className="relative">
-                      <Input
-                        type="time"
-                        value={scheduleTime}
-                        onChange={(e) => setScheduleTime(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
+                <div className="space-y-4">
+                  <Label>Post Timing</Label>
+                  <div className="flex gap-4">
+                    <Button
+                      type="button"
+                      variant={scheduleType === "now" ? "default" : "outline"}
+                      onClick={() => setScheduleType("now")}
+                      className="flex-1"
+                    >
+                      Post Now
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={scheduleType === "later" ? "default" : "outline"}
+                      onClick={() => setScheduleType("later")}
+                      className="flex-1"
+                    >
+                      Schedule Later
+                    </Button>
                   </div>
+
+                  {scheduleType === "later" && (
+                    <div className="space-y-2">
+                      <Label>Schedule Date/Time</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !scheduleDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {scheduleDate ? format(scheduleDate, "PPP") : "Pick a date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={scheduleDate}
+                              onSelect={setScheduleDate}
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <div className="relative">
+                          <Input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="pl-10"
+                            required={scheduleType === "later"}
+                          />
+                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -286,9 +378,9 @@ const CreatePost = () => {
                     variant="hero" 
                     size="lg" 
                     className="min-w-[160px]"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || uploading}
                   >
-                    {isSubmitting ? "Creating..." : "Create Post"}
+                    {isSubmitting ? "Creating..." : uploading ? "Uploading..." : "Create Post"}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
