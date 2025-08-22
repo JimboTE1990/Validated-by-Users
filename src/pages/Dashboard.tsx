@@ -41,22 +41,22 @@ const Dashboard = () => {
       title: "Total Earnings",
       value: `£${profile?.total_winnings?.toFixed(2) || "0.00"}`,
       icon: Trophy,
-      trend: "+12%",
-      color: "text-success"
+      trend: profile?.total_winnings && profile.total_winnings > 0 ? "+Active" : "Start earning",
+      color: profile?.total_winnings && profile.total_winnings > 0 ? "text-success" : "text-muted-foreground"
     },
     {
       title: "Feedback Given", 
       value: profile?.total_feedback?.toString() || "0",
       icon: MessageCircle,
-      trend: "+5",
-      color: "text-primary"
+      trend: profile?.total_feedback && profile.total_feedback > 0 ? `${profile.total_feedback} contribution${profile.total_feedback > 1 ? 's' : ''}` : "Give feedback",
+      color: profile?.total_feedback && profile.total_feedback > 0 ? "text-primary" : "text-muted-foreground"
     },
     {
       title: "Active Entries",
-      value: profile?.total_entries?.toString() || "0", 
+      value: activePools.length.toString(), 
       icon: TrendingUp,
-      trend: "3 ending soon",
-      color: "text-accent"
+      trend: activePools.length > 0 ? `${activePools.length} active pool${activePools.length > 1 ? 's' : ''}` : "Join pools",
+      color: activePools.length > 0 ? "text-accent" : "text-muted-foreground"
     }
   ];
 
@@ -384,38 +384,53 @@ const Dashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-foreground text-sm">Round 12 Prize</p>
-                      <p className="text-xs text-muted-foreground">EcoTrack Validation</p>
+                  {loading ? (
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                            <div className="space-y-2">
+                              <div className="h-4 bg-muted rounded w-24"></div>
+                              <div className="h-3 bg-muted rounded w-32"></div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="h-4 bg-muted rounded w-16"></div>
+                              <div className="h-5 bg-muted rounded w-12"></div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm text-primary">£15.00</p>
-                      <Badge variant="secondary" className="text-xs">Pending</Badge>
+                  ) : activities.filter(activity => activity.reward_amount && activity.reward_amount > 0).length > 0 ? (
+                    activities
+                      .filter(activity => activity.reward_amount && activity.reward_amount > 0)
+                      .slice(0, 5)
+                      .map((activity) => (
+                        <div key={activity.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                          <div>
+                            <p className="font-medium text-foreground text-sm">{activity.reward_description || 'Prize Reward'}</p>
+                            <p className="text-xs text-muted-foreground">{activity.post.title}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-semibold text-sm ${
+                              activity.status === 'completed' ? 'text-success' : 
+                              activity.status === 'released' ? 'text-accent' : 'text-primary'
+                            }`}>
+                              £{activity.reward_amount.toFixed(2)}
+                            </p>
+                            <Badge variant={activity.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                              {activity.status === 'completed' ? 'Paid' : 
+                               activity.status === 'released' ? 'Released to Stripe' : 'Pending'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Award className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">No rewards yet. Start participating to earn rewards!</p>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-foreground text-sm">Round 8 Prize</p>
-                      <p className="text-xs text-muted-foreground">DevSync Feedback</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm text-success">£67.50</p>
-                      <Badge variant="default" className="text-xs">Paid</Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-foreground text-sm">Round 6 Prize</p>
-                      <p className="text-xs text-muted-foreground">MindfulAI Review</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm text-accent">£30.00</p>
-                      <Badge variant="secondary" className="text-xs">Released to Stripe</Badge>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
 
