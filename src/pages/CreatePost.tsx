@@ -79,6 +79,16 @@ const CreatePost = () => {
       return;
     }
 
+    // Check if URL is missing and ask for confirmation
+    if (!formData.productLink.trim()) {
+      const shouldContinue = window.confirm(
+        "You haven't entered a website/URL. Are you sure you'd like to continue without one?"
+      );
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -221,14 +231,17 @@ const CreatePost = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="productLink">Link to App/Product</Label>
+                  <Label htmlFor="productLink">Website/URL</Label>
                   <Input
                     id="productLink"
-                    type="url"
+                    type="text"
                     placeholder="https://yourproduct.com"
                     value={formData.productLink}
                     onChange={(e) => handleInputChange("productLink", e.target.value)}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Optional - Add your website or product URL
+                  </p>
                 </div>
 
                 <div className="space-y-2">
