@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePasswordStrength } from "@/hooks/usePasswordStrength";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +51,14 @@ const Auth = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Password strength validation for registration
+  const passwordStrength = usePasswordStrength({
+    password: registerForm.password,
+    email: registerForm.email,
+    firstName: registerForm.firstName,
+    lastName: registerForm.lastName,
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,6 +449,11 @@ const Auth = () => {
                         )}
                       </Button>
                     </div>
+                    {/* Password strength indicator */}
+                    <PasswordStrengthIndicator 
+                      strength={passwordStrength}
+                      className="mt-2"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-confirm">Confirm Password</Label>
