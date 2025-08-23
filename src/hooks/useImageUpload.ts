@@ -41,7 +41,7 @@ export const useImageUpload = () => {
           .insert({
             post_id: postId,
             image_url: publicUrl,
-            image_type: file.type.startsWith('video/') ? 'video' : 'image'
+            image_type: file.type.startsWith('video/') ? 'video' : 'screenshot'
           });
 
         if (dbError) {
@@ -51,7 +51,7 @@ export const useImageUpload = () => {
 
         uploadedImages.push({
           url: publicUrl,
-          type: file.type.startsWith('video/') ? 'video' : 'image'
+          type: file.type.startsWith('video/') ? 'video' : 'screenshot'
         });
       }
 
