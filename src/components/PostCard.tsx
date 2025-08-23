@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MessageCircle, TrendingUp, Trophy } from "lucide-react";
+import { Clock, MessageCircle, TrendingUp, Trophy, CheckCircle, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostCardProps {
   id: string;
@@ -14,6 +15,11 @@ interface PostCardProps {
   category: string;
   authorName: string;
   authorAvatar: string;
+  userEntry?: {
+    id: string;
+    is_boosted: boolean;
+  } | null;
+  onEnterDraw?: (postId: string) => void;
 }
 
 const PostCard = ({ 
@@ -25,8 +31,27 @@ const PostCard = ({
   commentCount, 
   category, 
   authorName,
-  authorAvatar 
+  authorAvatar,
+  userEntry,
+  onEnterDraw
 }: PostCardProps) => {
+  const { toast } = useToast();
+  
+  const handleEnterDraw = async () => {
+    try {
+      await onEnterDraw?.(id);
+      toast({
+        title: "Successfully entered!",
+        description: "You've entered this validation round."
+      });
+    } catch (error) {
+      toast({
+        title: "Entry failed",
+        description: error instanceof Error ? error.message : "Failed to enter draw",
+        variant: "destructive"
+      });
+    }
+  };
   return (
     <Card className="group relative overflow-hidden border-0 bg-gradient-card shadow-sm hover:shadow-card-hover transition-smooth">
       <CardContent className="p-6">
@@ -57,9 +82,26 @@ const PostCard = ({
             <span className="text-sm font-medium text-foreground">{authorName}</span>
           </div>
           
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <MessageCircle className="h-4 w-4" />
-            <span>{commentCount} entries</span>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <MessageCircle className="h-4 w-4" />
+              <span>{commentCount}</span>
+            </div>
+            
+            {userEntry && (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  <CheckCircle className="h-4 w-4 text-success" />
+                  <span className="text-sm font-medium text-success">Entered</span>
+                </div>
+                {userEntry.is_boosted && (
+                  <div className="flex items-center space-x-1">
+                    <Zap className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium text-warning">Boosted</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -72,12 +114,24 @@ const PostCard = ({
             <span className="text-sm text-muted-foreground">prize pool</span>
           </div>
           
-          <Link to={`/post/${id}`}>
-            <Button variant="prize" size="sm" className="min-w-[120px]">
+          {userEntry ? (
+            <Link to={`/post/${id}`}>
+              <Button variant="outline" size="sm" className="min-w-[120px]">
+                <MessageCircle className="h-4 w-4" />
+                View Entry
+              </Button>
+            </Link>
+          ) : (
+            <Button 
+              variant="prize" 
+              size="sm" 
+              className="min-w-[120px]"
+              onClick={handleEnterDraw}
+            >
               <TrendingUp className="h-4 w-4" />
               Enter Draw
             </Button>
-          </Link>
+          )}
         </div>
       </CardFooter>
     </Card>

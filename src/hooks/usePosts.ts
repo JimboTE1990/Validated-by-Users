@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Post {
   id: string;
@@ -25,6 +26,10 @@ export interface Post {
     last_name: string;
     avatar_url?: string;
   };
+  user_entry?: {
+    id: string;
+    is_boosted: boolean;
+  } | null;
 }
 
 export interface PostWithComments extends Post {
@@ -51,11 +56,13 @@ export const usePosts = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('posts')
         .select(`
           *,
@@ -65,8 +72,37 @@ export const usePosts = () => {
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setPosts(data || []);
+      const { data: postsData, error: postsError } = await query;
+      if (postsError) throw postsError;
+
+      // Fetch user entries if user is logged in
+      let postsWithEntries = postsData || [];
+      if (user && postsData) {
+        const { data: entriesData } = await supabase
+          .from('user_activities')
+          .select('id, post_id, activity_type')
+          .eq('user_id', user.id)
+          .eq('activity_type', 'entry')
+          .in('post_id', postsData.map(p => p.id));
+
+        // Check for boosted comments
+        const { data: commentsData } = await supabase
+          .from('comments')
+          .select('post_id, is_boosted')
+          .eq('user_id', user.id)
+          .eq('is_boosted', true)
+          .in('post_id', postsData.map(p => p.id));
+
+        postsWithEntries = postsData.map(post => ({
+          ...post,
+          user_entry: entriesData?.find(e => e.post_id === post.id) ? {
+            id: entriesData.find(e => e.post_id === post.id)!.id,
+            is_boosted: commentsData?.some(c => c.post_id === post.id) || false
+          } : null
+        }));
+      }
+
+      setPosts(postsWithEntries);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -74,11 +110,45 @@ export const usePosts = () => {
     }
   };
 
+  const enterDraw = async (postId: string) => {
+    if (!user) {
+      throw new Error('Must be logged in to enter');
+    }
+
+    // Check if user already entered
+    const { data: existingEntry } = await supabase
+      .from('user_activities')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('post_id', postId)
+      .eq('activity_type', 'entry')
+      .single();
+
+    if (existingEntry) {
+      throw new Error('You have already entered this draw');
+    }
+
+    // Create entry
+    const { error } = await supabase
+      .from('user_activities')
+      .insert({
+        user_id: user.id,
+        post_id: postId,
+        activity_type: 'entry',
+        status: 'active'
+      });
+
+    if (error) throw error;
+
+    // Refresh posts to update entry status
+    await fetchPosts();
+  };
+
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [user?.id]);
 
-  return { posts, loading, error, refetch: fetchPosts };
+  return { posts, loading, error, refetch: fetchPosts, enterDraw };
 };
 
 export const usePost = (id: string) => {

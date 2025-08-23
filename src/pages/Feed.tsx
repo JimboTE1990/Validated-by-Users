@@ -29,7 +29,7 @@ const Feed = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   
-  const { posts, loading, error } = usePosts();
+  const { posts, loading, error, enterDraw } = usePosts();
   const { categories } = useCategories();
 
   const categoryNames = useMemo(() => 
@@ -157,6 +157,8 @@ const Feed = () => {
               category={post.category.name}
               authorName={`${post.author.first_name} ${post.author.last_name}`}
               authorAvatar={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
+              userEntry={post.user_entry}
+              onEnterDraw={enterDraw}
             />
           ))}
         </div>
