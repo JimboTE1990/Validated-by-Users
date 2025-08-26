@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useStatistics } from "@/hooks/useStatistics";
 import heroImage from "@/assets/hero-image.jpg";
 import mockupFounderPost from "@/assets/mockup-founder-post.jpg";
 import mockupUserFeedback from "@/assets/mockup-user-feedback.jpg";
@@ -12,6 +13,7 @@ import mockupWinnerScreen from "@/assets/mockup-winner-screen.jpg";
 
 const Home = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
+  const { stats, loading } = useStatistics();
 
   const scrollToStep = (stepNumber: number) => {
     setActiveStep(activeStep === stepNumber ? null : stepNumber);
@@ -284,23 +286,27 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-16 bg-background">
         <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className={`grid gap-8 text-center ${stats.monthlyActiveUsers ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
             <div>
-              <div className="text-3xl font-bold text-primary mb-2">£127k+</div>
+              <div className="text-3xl font-bold text-primary mb-2">
+                {loading ? '...' : `£${(stats.totalPrizePools / 1000).toFixed(0)}k${stats.totalPrizePools >= 1000 ? '+' : ''}`}
+              </div>
               <div className="text-sm text-muted-foreground">Total Prize Pools</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-success mb-2">8,234</div>
+              <div className="text-3xl font-bold text-success mb-2">
+                {loading ? '...' : `${stats.productsValidated.toLocaleString()}${stats.productsValidated >= 1000 ? '+' : ''}`}
+              </div>
               <div className="text-sm text-muted-foreground">Products Validated</div>
             </div>
-            <div>
-              <div className="text-3xl font-bold text-accent mb-2">45k+</div>
-              <div className="text-sm text-muted-foreground">Active Users</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-foreground mb-2">96%</div>
-              <div className="text-sm text-muted-foreground">Satisfaction Rate</div>
-            </div>
+            {stats.monthlyActiveUsers && (
+              <div>
+                <div className="text-3xl font-bold text-accent mb-2">
+                  {loading ? '...' : `${(stats.monthlyActiveUsers / 1000).toFixed(0)}k+`}
+                </div>
+                <div className="text-sm text-muted-foreground">Monthly Active Users</div>
+              </div>
+            )}
           </div>
         </div>
       </section>

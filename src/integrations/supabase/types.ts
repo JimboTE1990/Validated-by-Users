@@ -217,6 +217,33 @@ export type Database = {
         }
         Relationships: []
       }
+      site_statistics: {
+        Row: {
+          active_users_baseline: number
+          created_at: string
+          id: string
+          products_validated_baseline: number
+          total_prize_pools_baseline: number
+          updated_at: string
+        }
+        Insert: {
+          active_users_baseline?: number
+          created_at?: string
+          id?: string
+          products_validated_baseline?: number
+          total_prize_pools_baseline?: number
+          updated_at?: string
+        }
+        Update: {
+          active_users_baseline?: number
+          created_at?: string
+          id?: string
+          products_validated_baseline?: number
+          total_prize_pools_baseline?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_activities: {
         Row: {
           activity_type: string
