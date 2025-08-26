@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, MessageCircle, TrendingUp, Trophy, CheckCircle, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PostCardProps {
   id: string;
@@ -15,6 +16,7 @@ interface PostCardProps {
   category: string;
   authorName: string;
   authorAvatar: string;
+  authorId: string;
   userEntry?: {
     id: string;
     is_boosted: boolean;
@@ -32,10 +34,14 @@ const PostCard = ({
   category, 
   authorName,
   authorAvatar,
+  authorId,
   userEntry,
   onEnterDraw
 }: PostCardProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  
+  const isOwnPost = user?.id === authorId;
   
   const handleEnterDraw = async () => {
     try {
@@ -127,9 +133,10 @@ const PostCard = ({
               size="sm" 
               className="min-w-[120px]"
               onClick={handleEnterDraw}
+              disabled={isOwnPost}
             >
               <TrendingUp className="h-4 w-4" />
-              Enter Draw
+              {isOwnPost ? "Your Request" : "Enter Draw"}
             </Button>
           )}
         </div>
