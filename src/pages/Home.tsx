@@ -2,18 +2,58 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
+import { MediaUpload } from "@/components/MediaUpload";
 import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStatistics } from "@/hooks/useStatistics";
 import heroImage from "@/assets/hero-image.jpg";
-import mockupStep1Form from "@/assets/mockup-step1-form.jpg";
-import mockupStep2Discover from "@/assets/mockup-step2-discover.jpg";
-import mockupStep3Payouts from "@/assets/mockup-step3-payouts.jpg";
 
 const Home = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const { stats, loading } = useStatistics();
+  const [stepMedia, setStepMedia] = useState<{
+    [key: number]: { url: string; type: 'image' | 'video' }
+  }>({});
+
+  // Load saved media from localStorage on component mount
+  useEffect(() => {
+    const loadedMedia: { [key: number]: { url: string; type: 'image' | 'video' } } = {};
+    
+    for (let i = 1; i <= 3; i++) {
+      const mediaKey = `step-${i}-media`;
+      const savedMedia = localStorage.getItem(mediaKey);
+      if (savedMedia) {
+        try {
+          const mediaData = JSON.parse(savedMedia);
+          loadedMedia[i] = {
+            url: mediaData.url,
+            type: mediaData.type
+          };
+        } catch (error) {
+          console.error(`Error loading media for step ${i}:`, error);
+        }
+      }
+    }
+    
+    setStepMedia(loadedMedia);
+  }, []);
+
+  const handleMediaUploaded = (stepNumber: number, mediaUrl: string, mediaType: 'image' | 'video') => {
+    if (mediaUrl) {
+      setStepMedia(prev => ({
+        ...prev,
+        [stepNumber]: { url: mediaUrl, type: mediaType }
+      }));
+    } else {
+      // Remove media
+      setStepMedia(prev => {
+        const updated = { ...prev };
+        delete updated[stepNumber];
+        return updated;
+      });
+    }
+  };
 
   const scrollToStep = (stepNumber: number) => {
     setActiveStep(activeStep === stepNumber ? null : stepNumber);
@@ -182,13 +222,13 @@ const Home = () => {
                   </li>
                 </ul>
               </div>
-              <div className="relative">
-                <img 
-                  src={mockupStep1Form} 
-                  alt="Step 1: Data entry form for founders to create validation posts"
-                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
-                />
-              </div>
+              <MediaUpload
+                stepNumber={1}
+                stepTitle="Step 1: Founders Post"
+                onMediaUploaded={handleMediaUploaded}
+                currentMediaUrl={stepMedia[1]?.url}
+                currentMediaType={stepMedia[1]?.type}
+              />
             </div>
           </div>
 
@@ -196,10 +236,12 @@ const Home = () => {
           <div id="step-2" className={`mb-16 transition-all duration-500 ${activeStep === 2 ? 'opacity-100' : 'opacity-60'}`}>
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1">
-                <img 
-                  src={mockupStep2Discover} 
-                  alt="Step 2: Discover section showing validation posts and prize pools"
-                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
+                <MediaUpload
+                  stepNumber={2}
+                  stepTitle="Step 2: Users Validate"
+                  onMediaUploaded={handleMediaUploaded}
+                  currentMediaUrl={stepMedia[2]?.url}
+                  currentMediaType={stepMedia[2]?.type}
                 />
               </div>
               <div className="order-1 lg:order-2">
@@ -268,13 +310,13 @@ const Home = () => {
                   </li>
                 </ul>
               </div>
-              <div className="relative">
-                <img 
-                  src={mockupStep3Payouts} 
-                  alt="Step 3: Dashboard payouts section showing rewards and Stripe integration"
-                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
-                />
-              </div>
+              <MediaUpload
+                stepNumber={3}
+                stepTitle="Step 3: Everyone Wins"
+                onMediaUploaded={handleMediaUploaded}
+                currentMediaUrl={stepMedia[3]?.url}
+                currentMediaType={stepMedia[3]?.type}
+              />
             </div>
           </div>
         </div>
