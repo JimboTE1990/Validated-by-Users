@@ -38,8 +38,12 @@ export type Database = {
           created_at: string
           id: string
           is_boosted: boolean | null
+          is_reported_by_author: boolean | null
           likes: number | null
           post_id: string | null
+          report_reason: string | null
+          report_status: string | null
+          reported_at: string | null
           updated_at: string
           user_id: string | null
         }
@@ -48,8 +52,12 @@ export type Database = {
           created_at?: string
           id?: string
           is_boosted?: boolean | null
+          is_reported_by_author?: boolean | null
           likes?: number | null
           post_id?: string | null
+          report_reason?: string | null
+          report_status?: string | null
+          reported_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -58,8 +66,12 @@ export type Database = {
           created_at?: string
           id?: string
           is_boosted?: boolean | null
+          is_reported_by_author?: boolean | null
           likes?: number | null
           post_id?: string | null
+          report_reason?: string | null
+          report_status?: string | null
+          reported_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -76,6 +88,51 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_reports: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          post_id: string
+          report_details: string | null
+          report_reason: string
+          reporter_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          post_id: string
+          report_details?: string | null
+          report_reason: string
+          reporter_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          report_details?: string | null
+          report_reason?: string
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -428,6 +485,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_comments_for_author: {
+        Args: { p_post_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          is_boosted: boolean
+          is_reported_by_author: boolean
+          likes: number
+          post_id: string
+          report_status: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -441,6 +513,14 @@ export type Database = {
           is_suspended: boolean
           new_strike_count: number
         }[]
+      }
+      report_feedback_as_author: {
+        Args: {
+          p_comment_id: string
+          p_report_details?: string
+          p_report_reason: string
+        }
+        Returns: Json
       }
     }
     Enums: {
