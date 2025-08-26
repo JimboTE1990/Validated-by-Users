@@ -7,9 +7,9 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useStatistics } from "@/hooks/useStatistics";
 import heroImage from "@/assets/hero-image.jpg";
-import mockupFounderPost from "@/assets/mockup-founder-post.jpg";
-import mockupUserFeedback from "@/assets/mockup-user-feedback.jpg";
-import mockupWinnerScreen from "@/assets/mockup-winner-screen.jpg";
+import mockupStep1Form from "@/assets/mockup-step1-form.jpg";
+import mockupStep2Discover from "@/assets/mockup-step2-discover.jpg";
+import mockupStep3Payouts from "@/assets/mockup-step3-payouts.jpg";
 
 const Home = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
@@ -183,12 +183,11 @@ const Home = () => {
                 </ul>
               </div>
               <div className="relative">
-                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <div className="text-4xl mb-2">📱</div>
-                    <p className="text-sm">Step 1 Preview</p>
-                  </div>
-                </div>
+                <img 
+                  src={mockupStep1Form} 
+                  alt="Step 1: Data entry form for founders to create validation posts"
+                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
+                />
               </div>
             </div>
           </div>
@@ -197,12 +196,11 @@ const Home = () => {
           <div id="step-2" className={`mb-16 transition-all duration-500 ${activeStep === 2 ? 'opacity-100' : 'opacity-60'}`}>
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="order-2 lg:order-1">
-                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <div className="text-4xl mb-2">💬</div>
-                    <p className="text-sm">Step 2 Preview</p>
-                  </div>
-                </div>
+                <img 
+                  src={mockupStep2Discover} 
+                  alt="Step 2: Discover section showing validation posts and prize pools"
+                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
+                />
               </div>
               <div className="order-1 lg:order-2">
                 <div className="flex items-center gap-3 mb-6">
@@ -271,12 +269,11 @@ const Home = () => {
                 </ul>
               </div>
               <div className="relative">
-                <div className="h-64 bg-muted/50 rounded-lg shadow-2xl border border-border/50 flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <div className="text-4xl mb-2">🏆</div>
-                    <p className="text-sm">Step 3 Preview</p>
-                  </div>
-                </div>
+                <img 
+                  src={mockupStep3Payouts} 
+                  alt="Step 3: Dashboard payouts section showing rewards and Stripe integration"
+                  className="w-full h-auto rounded-lg shadow-2xl border border-border/50"
+                />
               </div>
             </div>
           </div>
