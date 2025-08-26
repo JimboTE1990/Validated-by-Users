@@ -9,6 +9,7 @@ import { usePost } from "@/hooks/usePosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useModeration } from "@/hooks/useModeration";
 import { 
   Trophy, 
   Clock, 
@@ -66,6 +67,7 @@ const PostDetail = () => {
   const { post, loading, error, refetch } = usePost(id || '');
   const { user } = useAuth();
   const { toast } = useToast();
+  const { moderateContent, checkUserStatus, isProcessing } = useModeration();
 
   const handleSubmitFeedback = async () => {
     if (!feedback.trim() || !agreedToTerms || !user || !post) return;
@@ -73,6 +75,28 @@ const PostDetail = () => {
     setIsSubmitting(true);
     
     try {
+      // Check if user is suspended before proceeding
+      const { isSuspended } = await checkUserStatus();
+      
+      if (isSuspended) {
+        toast({
+          title: "Account Suspended",
+          description: "🚫 Your account is suspended. Contact support if you believe this is an error.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Run moderation on the feedback content
+      const moderationResult = await moderateContent(feedback, post.id);
+      
+      if (!moderationResult || moderationResult.classification === 'spam') {
+        // Moderation failed or content is spam - don't insert comment
+        // The moderation hook already shows the appropriate warning toast
+        return;
+      }
+
+      // Content passed moderation, proceed with submission
       const { error } = await supabase
         .from('comments')
         .insert({
@@ -452,15 +476,15 @@ const PostDetail = () => {
                     className="min-h-[120px] resize-none"
                     disabled={!agreedToTerms}
                   />
-                  <Button 
-                    onClick={handleSubmitFeedback}
-                    disabled={!feedback.trim() || !agreedToTerms || isSubmitting}
-                    className="w-full"
-                    variant="hero"
-                  >
-                    <Send className="h-4 w-4" />
-                    {isSubmitting ? "Submitting..." : "Submit Feedback and Enter Draw"}
-                  </Button>
+                   <Button 
+                     onClick={handleSubmitFeedback}
+                     disabled={!feedback.trim() || !agreedToTerms || isSubmitting || isProcessing}
+                     className="w-full"
+                     variant="hero"
+                   >
+                     <Send className="h-4 w-4" />
+                     {isSubmitting || isProcessing ? "Processing..." : "Submit Feedback and Enter Draw"}
+                   </Button>
                 </div>
               </CardContent>
             </Card>
