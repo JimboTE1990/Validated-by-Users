@@ -80,6 +80,50 @@ export type Database = {
           },
         ]
       }
+      moderated_content: {
+        Row: {
+          action_taken: string
+          classification: string
+          content: string
+          created_at: string
+          id: string
+          reason: string
+          related_post_id: string | null
+          strike_level: number
+          user_id: string
+        }
+        Insert: {
+          action_taken: string
+          classification: string
+          content: string
+          created_at?: string
+          id?: string
+          reason: string
+          related_post_id?: string | null
+          strike_level: number
+          user_id: string
+        }
+        Update: {
+          action_taken?: string
+          classification?: string
+          content?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          related_post_id?: string | null
+          strike_level?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderated_content_related_post_id_fkey"
+            columns: ["related_post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_images: {
         Row: {
           created_at: string
@@ -292,12 +336,51 @@ export type Database = {
           },
         ]
       }
+      user_strikes: {
+        Row: {
+          created_at: string
+          id: string
+          is_suspended: boolean
+          last_strike_at: string | null
+          strike_count: number
+          suspended_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_suspended?: boolean
+          last_strike_at?: string | null
+          strike_count?: number
+          suspended_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_suspended?: boolean
+          last_strike_at?: string | null
+          strike_count?: number
+          suspended_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_user_strike: {
+        Args: { target_user_id: string }
+        Returns: {
+          is_suspended: boolean
+          new_strike_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
