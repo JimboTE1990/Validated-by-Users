@@ -112,6 +112,7 @@ export type Database = {
           is_boosted: boolean | null
           is_reported_by_author: boolean | null
           likes: number | null
+          parent_comment_id: string | null
           post_id: string | null
           report_reason: string | null
           report_status: string | null
@@ -126,6 +127,7 @@ export type Database = {
           is_boosted?: boolean | null
           is_reported_by_author?: boolean | null
           likes?: number | null
+          parent_comment_id?: string | null
           post_id?: string | null
           report_reason?: string | null
           report_status?: string | null
@@ -140,6 +142,7 @@ export type Database = {
           is_boosted?: boolean | null
           is_reported_by_author?: boolean | null
           likes?: number | null
+          parent_comment_id?: string | null
           post_id?: string | null
           report_reason?: string | null
           report_status?: string | null
@@ -148,6 +151,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comments_post_id_fkey"
             columns: ["post_id"]

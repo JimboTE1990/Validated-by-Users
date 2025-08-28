@@ -26,7 +26,8 @@ import {
   ImageIcon,
   Zap,
   Edit,
-  Settings
+  Settings,
+  Reply
 } from "lucide-react";
 
 const getTimeLeft = (endDate: string) => {
@@ -75,6 +76,8 @@ const PostDetail = () => {
     full_description: "",
     product_link: ""
   });
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [isReplyingTo, setIsReplyingTo] = useState<string | null>(null);
   
   const { post, loading, error, refetch } = usePost(id || '');
   const { user } = useAuth();
@@ -200,6 +203,47 @@ const PostDetail = () => {
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReplySubmit = async (commentId: string) => {
+    if (!user || !post || post.author_id !== user.id || !replyText[commentId]?.trim()) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Post author replies don't need moderation
+      const { error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: post.id,
+          user_id: user.id,
+          content: replyText[commentId].trim(),
+          parent_comment_id: commentId,
+          likes: 0,
+          is_boosted: false
+        });
+
+      if (error) throw error;
+
+      // Clear the reply text and close the reply form
+      setReplyText(prev => ({ ...prev, [commentId]: '' }));
+      setIsReplyingTo(null);
+      refetch();
+      
+      toast({
+        title: "Reply Posted!",
+        description: "Your response has been posted successfully.",
+      });
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      toast({
+        title: "Error",
+        description: "Failed to post reply. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -551,21 +595,99 @@ const PostDetail = () => {
                                 {getRelativeTime(comment.created_at)}
                               </span>
                             </div>
-                            {isPostAuthor && !comment.is_boosted && boostedComments.size < 5 && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleBoostComment(comment.id)}
-                                className="text-xs"
-                              >
-                                <Zap className="h-3 w-3 mr-1" />
-                                Boost
-                              </Button>
-                            )}
+                            <div className="flex items-center space-x-2">
+                              {isPostAuthor && !comment.is_boosted && boostedComments.size < 5 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleBoostComment(comment.id)}
+                                  className="text-xs"
+                                >
+                                  <Zap className="h-3 w-3 mr-1" />
+                                  Boost
+                                </Button>
+                              )}
+                              {isPostAuthor && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setIsReplyingTo(isReplyingTo === comment.id ? null : comment.id)}
+                                  className="text-xs"
+                                >
+                                  <Reply className="h-3 w-3 mr-1" />
+                                  Reply
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           <p className="text-muted-foreground mb-3 text-sm leading-relaxed">
                             {comment.content}
                           </p>
+                          
+                          {/* Author Replies */}
+                          {comment.replies && comment.replies.length > 0 && (
+                            <div className="ml-6 space-y-3 border-l-2 border-primary/20 pl-4">
+                              {comment.replies.map((reply) => (
+                                <div key={reply.id} className="flex items-start space-x-3">
+                                  <img 
+                                    src={reply.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.user.first_name}`}
+                                    alt={`${reply.user.first_name} ${reply.user.last_name}`}
+                                    className="h-6 w-6 rounded-full border border-border/50"
+                                  />
+                                  <div className="flex-1 bg-primary/5 rounded-lg p-3">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="font-semibold text-foreground text-sm">
+                                        {reply.user.first_name} {reply.user.last_name}
+                                      </span>
+                                      <Badge variant="secondary" className="bg-primary/10 text-primary border-0 text-xs">
+                                        Author
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {getRelativeTime(reply.created_at)}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-foreground">
+                                      {reply.content}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reply Form */}
+                          {isPostAuthor && isReplyingTo === comment.id && (
+                            <div className="ml-6 mt-3 border-l-2 border-primary/20 pl-4">
+                              <div className="space-y-3">
+                                <Textarea
+                                  placeholder="Write your response..."
+                                  value={replyText[comment.id] || ''}
+                                  onChange={(e) => setReplyText(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                  className="min-h-[80px] resize-none"
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleReplySubmit(comment.id)}
+                                    disabled={!replyText[comment.id]?.trim() || isSubmitting}
+                                  >
+                                    <Send className="h-3 w-3 mr-1" />
+                                    {isSubmitting ? "Posting..." : "Post Reply"}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setIsReplyingTo(null);
+                                      setReplyText(prev => ({ ...prev, [comment.id]: '' }));
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

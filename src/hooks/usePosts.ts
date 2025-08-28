@@ -40,11 +40,23 @@ export interface PostWithComments extends Post {
     is_boosted: boolean;
     created_at: string;
     user_id: string;
+    parent_comment_id?: string | null;
     user: {
       first_name: string;
       last_name: string;
-      avatar_url?: string;
+      avatar_url?: string | null;
     };
+    replies?: Array<{
+      id: string;
+      content: string;
+      created_at: string;
+      user_id: string;
+      user: {
+        first_name: string;
+        last_name: string;
+        avatar_url?: string | null;
+      };
+    }> | null;
   }>;
   images: Array<{
     id: string;
@@ -170,22 +182,48 @@ export const usePost = (id: string) => {
           *,
           category:categories(name),
           author:profiles(first_name, last_name, avatar_url),
-          comments(
+          comments!comments_post_id_fkey(
             id,
             content,
             likes,
             is_boosted,
             created_at,
             user_id,
+            parent_comment_id,
             user:profiles(first_name, last_name, avatar_url)
           ),
           images:post_images(id, image_url, image_type)
         `)
         .eq('id', id)
+        .is('comments.parent_comment_id', null)
         .single();
 
       if (error) throw error;
-      setPost(data);
+
+      // Fetch replies separately for better type safety
+      const { data: repliesData } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id,
+          parent_comment_id,
+          user:profiles(first_name, last_name, avatar_url)
+        `)
+        .not('parent_comment_id', 'is', null)
+        .in('parent_comment_id', data?.comments?.map(c => c.id) || []);
+
+      // Process the data to match our interface
+      const processedPost = {
+        ...data,
+        comments: data.comments?.map(comment => ({
+          ...comment,
+          replies: repliesData?.filter(reply => reply.parent_comment_id === comment.id) || []
+        })) || []
+      };
+
+      setPost(processedPost);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
