@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
@@ -22,7 +24,9 @@ import {
   Globe,
   ExternalLink,
   ImageIcon,
-  Zap
+  Zap,
+  Edit,
+  Settings
 } from "lucide-react";
 
 const getTimeLeft = (endDate: string) => {
@@ -64,6 +68,13 @@ const PostDetail = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [boostedComments, setBoostedComments] = useState<Set<string>>(new Set());
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    description: "",
+    full_description: "",
+    product_link: ""
+  });
   
   const { post, loading, error, refetch } = usePost(id || '');
   const { user } = useAuth();
@@ -73,14 +84,28 @@ const PostDetail = () => {
   // Check if user has already submitted feedback for this post
   useEffect(() => {
     if (user && post) {
+      // Set feedback state
       const userComment = post.comments?.find(comment => comment.user_id === user.id);
       if (userComment) {
         setHasSubmitted(true);
         setIsBoosted(userComment.is_boosted);
         setFeedback(userComment.content);
+        setAgreedToTerms(true); // Auto-check terms if editing existing feedback
       } else {
         setHasSubmitted(false);
         setIsBoosted(false);
+        setFeedback("");
+        setAgreedToTerms(false);
+      }
+
+      // Set post edit data if user is post author
+      if (post.author_id === user.id) {
+        setEditFormData({
+          title: post.title,
+          description: post.description,
+          full_description: post.full_description || "",
+          product_link: post.product_link || ""
+        });
       }
     }
   }, [user, post]);
@@ -163,15 +188,54 @@ const PostDetail = () => {
         });
       }
 
-      setHasSubmitted(true);
-      setFeedback("");
-      setAgreedToTerms(false);
-      refetch();
+        setHasSubmitted(true);
+        setIsBoosted(existingComment ? existingComment.is_boosted : false);
+        setFeedback("");
+        setAgreedToTerms(false);
+        refetch();
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (!user || !post || post.author_id !== user.id) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          title: editFormData.title,
+          description: editFormData.description,
+          full_description: editFormData.full_description,
+          product_link: editFormData.product_link,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', post.id);
+
+      if (error) throw error;
+
+      setIsEditingPost(false);
+      refetch();
+      
+      toast({
+        title: "Post Updated!",
+        description: "Your post has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update post. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -265,50 +329,127 @@ const PostDetail = () => {
                   <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
                     {post.category.name}
                   </Badge>
-                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{getTimeLeft(post.end_date)}</span>
-                  </div>
-                </div>
-                
-                <CardTitle className="text-3xl font-bold text-foreground mb-4">
-                  {post.title}
-                </CardTitle>
-                
-                <div className="flex items-center space-x-4">
-                  <img 
-                    src={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
-                    alt={`${post.author.first_name} ${post.author.last_name}`}
-                    className="h-10 w-10 rounded-full border-2 border-primary/20"
-                  />
-                  <div>
-                    <div className="font-semibold text-foreground">
-                      {post.author.first_name} {post.author.last_name}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{getTimeLeft(post.end_date)}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground">Founder</div>
+                    {isPostAuthor && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingPost(!isEditingPost)}
+                        className="text-xs"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        {isEditingPost ? "Cancel" : "Edit"}
+                      </Button>
+                    )}
                   </div>
                 </div>
+                
+                {isEditingPost ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-title" className="text-sm font-medium">Title</Label>
+                      <Input
+                        id="edit-title"
+                        value={editFormData.title}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-description" className="text-sm font-medium">Short Description</Label>
+                      <Textarea
+                        id="edit-description"
+                        value={editFormData.description}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                        className="mt-1 min-h-[80px]"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-full-description" className="text-sm font-medium">Full Description</Label>
+                      <Textarea
+                        id="edit-full-description"
+                        value={editFormData.full_description}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, full_description: e.target.value }))}
+                        className="mt-1 min-h-[120px]"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-product-link" className="text-sm font-medium">Product Link</Label>
+                      <Input
+                        id="edit-product-link"
+                        value={editFormData.product_link}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, product_link: e.target.value }))}
+                        className="mt-1"
+                        placeholder="https://your-product-url.com"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleUpdatePost}
+                        disabled={isSubmitting}
+                        className="flex-1"
+                      >
+                        {isSubmitting ? "Updating..." : "Update Post"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEditingPost(false)}
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <CardTitle className="text-3xl font-bold text-foreground mb-4">
+                      {post.title}
+                    </CardTitle>
+                    
+                    <div className="flex items-center space-x-4 mb-6">
+                      <img 
+                        src={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
+                        alt={`${post.author.first_name} ${post.author.last_name}`}
+                        className="h-10 w-10 rounded-full border-2 border-primary/20"
+                      />
+                      <div>
+                        <div className="font-semibold text-foreground">
+                          {post.author.first_name} {post.author.last_name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Founder</div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </CardHeader>
               
               <CardContent>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  {post.full_description || post.description}
-                </p>
-                
-                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-success mb-1">
-                      £{post.prize_pool.toLocaleString()}
+                {!isEditingPost && (
+                  <>
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                      {post.full_description || post.description}
+                    </p>
+                    
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-success mb-1">
+                          £{post.prize_pool.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Prize Pool</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary mb-1">
+                          {post.current_entries}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Entries</div>
+                      </div>
                     </div>
-                    <div className="text-sm text-muted-foreground">Prize Pool</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-primary mb-1">
-                      {post.current_entries}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Entries</div>
-                  </div>
-                </div>
+                  </>
+                )}
               </CardContent>
             </Card>
             
@@ -461,15 +602,18 @@ const PostDetail = () => {
               </CardContent>
             </Card>
             
-            {/* Feedback Form - Only show if user can comment */}
+            {/* Feedback Form - Only show if user can comment and hasn't submitted yet OR if editing existing */}
             {canComment && (
               <Card id="feedback-form" className="border-0 bg-gradient-card shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    Leave Feedback
+                    {hasSubmitted ? "Edit Your Feedback" : "Leave Feedback"}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Share your thoughts to automatically enter the prize draw!
+                    {hasSubmitted 
+                      ? "You can edit your feedback below. Changes will update your existing entry."
+                      : "Share your thoughts to automatically enter the prize draw!"
+                    }
                   </p>
                 </CardHeader>
                 <CardContent>
