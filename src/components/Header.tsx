@@ -72,7 +72,7 @@ const Header = () => {
                 </Button>
                 {isAdmin && (
                   <Button variant="ghost" size="sm" asChild>
-                    <Link to="/admin-dashboard" className="flex items-center gap-1">
+                    <Link to="/admin" className="flex items-center gap-1">
                       <Shield className="h-3 w-3" />
                       Admin
                     </Link>
