@@ -134,8 +134,8 @@ export const usePosts = () => {
       .insert({
         user_id: user.id,
         post_id: postId,
-        activity_type: 'entry',
-        status: 'active'
+        activity_type: 'entry'
+        // status defaults to 'pending' which is allowed by the constraint
       });
 
     if (error) throw error;
