@@ -85,21 +85,23 @@ export const usePosts = () => {
           .eq('activity_type', 'entry')
           .in('post_id', postsData.map(p => p.id));
 
-        // Check for boosted comments
+        // Check for user comments (actual feedback submitted)
         const { data: commentsData } = await supabase
           .from('comments')
           .select('post_id, is_boosted')
           .eq('user_id', user.id)
-          .eq('is_boosted', true)
           .in('post_id', postsData.map(p => p.id));
 
-        postsWithEntries = postsData.map(post => ({
-          ...post,
-          user_entry: entriesData?.find(e => e.post_id === post.id) ? {
-            id: entriesData.find(e => e.post_id === post.id)!.id,
-            is_boosted: commentsData?.some(c => c.post_id === post.id) || false
-          } : null
-        }));
+        postsWithEntries = postsData.map(post => {
+          const userComment = commentsData?.find(c => c.post_id === post.id);
+          return {
+            ...post,
+            user_entry: userComment ? {
+              id: entriesData?.find(e => e.post_id === post.id)?.id || 'comment-entry',
+              is_boosted: userComment.is_boosted || false
+            } : null
+          };
+        });
       }
 
       setPosts(postsWithEntries);

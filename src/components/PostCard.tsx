@@ -135,7 +135,7 @@ const PostCard = ({
               disabled={isOwnPost}
             >
               <TrendingUp className="h-4 w-4" />
-              {isOwnPost ? "Your Request" : "Enter Draw"}
+              {isOwnPost ? "Your Request" : "Leave Feedback"}
             </Button>
           )}
         </div>
