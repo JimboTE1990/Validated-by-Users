@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MessageCircle, TrendingUp, Trophy, CheckCircle, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -40,16 +40,15 @@ const PostCard = ({
 }: PostCardProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const isOwnPost = user?.id === authorId;
   
   const handleEnterDraw = async () => {
     try {
       await onEnterDraw?.(id);
-      toast({
-        title: "Successfully entered!",
-        description: "You've entered this validation round."
-      });
+      // Redirect to post detail page to complete the review process
+      navigate(`/post/${id}#feedback-form`);
     } catch (error) {
       toast({
         title: "Entry failed",
