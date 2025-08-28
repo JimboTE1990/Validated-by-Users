@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useAdminSecurity } from "@/hooks/useAdminSecurity";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,12 +30,51 @@ import { AdminContentManager } from "@/components/admin/AdminContentManager";
 import { AdminUserModeration } from "@/components/admin/AdminUserModeration";
 import { AdminAccountManager } from "@/components/admin/AdminAccountManager";
 import { AdminOversight } from "@/components/admin/AdminOversight";
+import { AdminSecurityPanel } from "@/components/admin/AdminSecurityPanel";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { isAdmin, loading } = useAdminRole();
+  const { logActivity, updateActivity, checkSessionTimeout } = useAdminSecurity({
+    enableSessionTracking: true,
+    sessionTimeout: 120 // 2 hours
+  });
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Log dashboard access on mount
+  useEffect(() => {
+    if (isAdmin && user) {
+      logActivity('admin_dashboard_access', 'dashboard', undefined, {
+        page: 'admin_dashboard',
+        user_email: user.email
+      });
+    }
+  }, [isAdmin, user, logActivity]);
+
+  // Check session timeout periodically
+  useEffect(() => {
+    if (isAdmin) {
+      const interval = setInterval(() => {
+        if (checkSessionTimeout()) {
+          // Redirect to login or show session expired modal
+          window.location.href = '/auth';
+        }
+      }, 60000); // Check every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, checkSessionTimeout]);
+
+  // Track user activity on tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    updateActivity();
+    logActivity('admin_tab_navigation', 'dashboard', undefined, {
+      from_tab: activeTab,
+      to_tab: tab
+    });
+  };
 
   if (loading) {
     return (
@@ -122,8 +162,8 @@ const AdminDashboard = () => {
             </Badge>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-5 max-w-2xl mb-8">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="grid grid-cols-6 max-w-3xl mb-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
                 Overview
@@ -143,6 +183,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="oversight" className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 Oversight
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Security
               </TabsTrigger>
             </TabsList>
 
@@ -172,7 +216,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   className="h-auto p-6 flex-col gap-2"
-                  onClick={() => setActiveTab("content")}
+                  onClick={() => handleTabChange("content")}
                 >
                   <Upload className="h-6 w-6 text-primary" />
                   <span>Manage Content</span>
@@ -180,7 +224,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   className="h-auto p-6 flex-col gap-2"
-                  onClick={() => setActiveTab("moderation")}
+                  onClick={() => handleTabChange("moderation")}
                 >
                   <Flag className="h-6 w-6 text-warning" />
                   <span>Review Reports</span>
@@ -188,7 +232,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   className="h-auto p-6 flex-col gap-2"
-                  onClick={() => setActiveTab("accounts")}
+                  onClick={() => handleTabChange("accounts")}
                 >
                   <UserCheck className="h-6 w-6 text-success" />
                   <span>Manage Users</span>
@@ -196,7 +240,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   className="h-auto p-6 flex-col gap-2"
-                  onClick={() => setActiveTab("oversight")}
+                  onClick={() => handleTabChange("oversight")}
                 >
                   <Activity className="h-6 w-6 text-accent" />
                   <span>View Logs</span>
@@ -258,8 +302,8 @@ const AdminDashboard = () => {
               <AdminAccountManager />
             </TabsContent>
 
-            <TabsContent value="oversight">
-              <AdminOversight />
+            <TabsContent value="security">
+              <AdminSecurityPanel />
             </TabsContent>
           </Tabs>
         </div>
