@@ -39,6 +39,7 @@ export interface PostWithComments extends Post {
     likes: number;
     is_boosted: boolean;
     created_at: string;
+    user_id: string;
     user: {
       first_name: string;
       last_name: string;
@@ -175,6 +176,7 @@ export const usePost = (id: string) => {
             likes,
             is_boosted,
             created_at,
+            user_id,
             user:profiles(first_name, last_name, avatar_url)
           ),
           images:post_images(id, image_url, image_type)

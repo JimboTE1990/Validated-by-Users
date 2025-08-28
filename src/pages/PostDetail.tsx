@@ -60,6 +60,7 @@ const PostDetail = () => {
   const { id } = useParams();
   const [feedback, setFeedback] = useState("");
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isBoosted, setIsBoosted] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [boostedComments, setBoostedComments] = useState<Set<string>>(new Set());
@@ -68,6 +69,21 @@ const PostDetail = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { moderateContent, checkUserStatus, isProcessing } = useModeration();
+
+  // Check if user has already submitted feedback for this post
+  useEffect(() => {
+    if (user && post) {
+      const userComment = post.comments?.find(comment => comment.user_id === user.id);
+      if (userComment) {
+        setHasSubmitted(true);
+        setIsBoosted(userComment.is_boosted);
+        setFeedback(userComment.content);
+      } else {
+        setHasSubmitted(false);
+        setIsBoosted(false);
+      }
+    }
+  }, [user, post]);
 
   const handleSubmitFeedback = async () => {
     if (!feedback.trim() || !agreedToTerms || !user || !post) return;
@@ -96,40 +112,61 @@ const PostDetail = () => {
         return;
       }
 
-      // Content passed moderation, proceed with submission
-      const { error } = await supabase
-        .from('comments')
-        .insert({
-          post_id: post.id,
-          user_id: user.id,
-          content: feedback,
-          likes: 0,
-          is_boosted: false
-        });
+      // Check if user already has a comment for this post
+      const existingComment = post.comments?.find(comment => comment.user_id === user.id);
 
-      if (error) throw error;
+      if (existingComment) {
+        // Update existing comment
+        const { error } = await supabase
+          .from('comments')
+          .update({
+            content: feedback,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingComment.id);
 
-      // Create user activity for feedback submission
-      await supabase
-        .from('user_activities')
-        .insert({
-          user_id: user.id,
-          post_id: post.id,
-          activity_type: 'feedback_submission',
-          reward_description: 'Feedback submitted for validation',
-          reward_amount: 0,
-          status: 'pending'
+        if (error) throw error;
+
+        toast({
+          title: "Feedback Updated!",
+          description: "Your feedback has been updated successfully.",
         });
+      } else {
+        // Create new comment
+        const { error } = await supabase
+          .from('comments')
+          .insert({
+            post_id: post.id,
+            user_id: user.id,
+            content: feedback,
+            likes: 0,
+            is_boosted: false
+          });
+
+        if (error) throw error;
+
+        // Create user activity for feedback submission
+        await supabase
+          .from('user_activities')
+          .insert({
+            user_id: user.id,
+            post_id: post.id,
+            activity_type: 'feedback_submission',
+            reward_description: 'Feedback submitted for validation',
+            reward_amount: 0,
+            status: 'pending'
+          });
+
+        toast({
+          title: "Feedback Submitted!",
+          description: "Your feedback has been submitted and you've been entered into the draw.",
+        });
+      }
 
       setHasSubmitted(true);
       setFeedback("");
       setAgreedToTerms(false);
       refetch();
-      
-      toast({
-        title: "Feedback Submitted!",
-        description: "Your feedback has been submitted and you've been entered into the draw.",
-      });
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast({
@@ -417,8 +454,8 @@ const PostDetail = () => {
                 
                 <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                   <span className="text-sm font-medium text-foreground">Boosted</span>
-                  <Badge variant={hasSubmitted ? "secondary" : "secondary"} className={hasSubmitted ? "bg-accent/10 text-accent border-0" : ""}>
-                    {hasSubmitted ? "Yes" : "No"}
+                  <Badge variant={isBoosted ? "default" : "secondary"} className={isBoosted ? "bg-accent/10 text-accent border-0" : ""}>
+                    {isBoosted ? "Yes" : "No"}
                   </Badge>
                 </div>
               </CardContent>
@@ -476,15 +513,15 @@ const PostDetail = () => {
                     className="min-h-[120px] resize-none"
                     disabled={!agreedToTerms}
                   />
-                   <Button 
-                     onClick={handleSubmitFeedback}
-                     disabled={!feedback.trim() || !agreedToTerms || isSubmitting || isProcessing}
-                     className="w-full"
-                     variant="hero"
-                   >
-                     <Send className="h-4 w-4" />
-                     {isSubmitting || isProcessing ? "Processing..." : "Submit Feedback and Enter Draw"}
-                   </Button>
+                     <Button 
+                      onClick={handleSubmitFeedback}
+                      disabled={!feedback.trim() || !agreedToTerms || isSubmitting || isProcessing}
+                      className="w-full"
+                      variant="hero"
+                    >
+                      <Send className="h-4 w-4" />
+                      {isSubmitting || isProcessing ? "Processing..." : hasSubmitted ? "Update Feedback" : "Submit Feedback and Enter Draw"}
+                    </Button>
                 </div>
               </CardContent>
             </Card>
