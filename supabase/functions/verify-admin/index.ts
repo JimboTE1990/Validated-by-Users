@@ -28,12 +28,10 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
     
-    // Set the user context for the request
-    supabaseClient.auth.setAuth(token)
+    // Get user from token
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     
-    const { data: user } = await supabaseClient.auth.getUser(token)
-    
-    if (!user.user) {
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }), 
         { 
@@ -45,8 +43,24 @@ Deno.serve(async (req) => {
 
     const body: AdminVerificationRequest = await req.json()
     
+    // Create a client instance for the authenticated user
+    const userSupabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false
+        },
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
+    )
+    
     // Verify admin access using the database function
-    const { data: adminVerification, error: verifyError } = await supabaseClient
+    const { data: adminVerification, error: verifyError } = await userSupabase
       .rpc('verify_admin_access', { 
         session_token: body.sessionToken || null 
       })
@@ -73,7 +87,7 @@ Deno.serve(async (req) => {
                        req.headers.get('X-Real-IP') || 
                        'Unknown'
 
-      const { error: logError } = await supabaseClient
+      const { error: logError } = await userSupabase
         .rpc('log_admin_activity', {
           p_action_type: body.action,
           p_resource_type: body.resourceType || null,

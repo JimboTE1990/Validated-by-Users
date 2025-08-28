@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { useAdminSecurity } from "@/hooks/useAdminSecurity";
+import { useAdminStats } from "@/hooks/useAdminStats";
+import { useAdminRealTimeUpdates } from "@/hooks/useRealTimeUpdates";
+import { AdminRealTimeStatus } from "@/components/admin/AdminRealTimeStatus";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,7 +43,25 @@ const AdminDashboard = () => {
     enableSessionTracking: true,
     sessionTimeout: 120 // 2 hours
   });
+  const { stats, loading: statsLoading, getRecentActivity, fetchStats } = useAdminStats();
   const [activeTab, setActiveTab] = useState("overview");
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Real-time updates for admin dashboard (refreshes every 30 seconds)
+  const { isConnected: realtimeConnected } = useAdminRealTimeUpdates(() => {
+    // Refresh stats when data changes
+    fetchStats();
+    setLastUpdate(new Date());
+    // Refresh recent activity
+    const loadRecentActivity = async () => {
+      if (isAdmin) {
+        const activity = await getRecentActivity(5);
+        setRecentActivity(activity);
+      }
+    };
+    loadRecentActivity();
+  });
 
   // Log dashboard access on mount
   useEffect(() => {
@@ -51,6 +72,17 @@ const AdminDashboard = () => {
       });
     }
   }, [isAdmin, user, logActivity]);
+
+  // Load recent activity
+  useEffect(() => {
+    const loadRecentActivity = async () => {
+      if (isAdmin) {
+        const activity = await getRecentActivity(5);
+        setRecentActivity(activity);
+      }
+    };
+    loadRecentActivity();
+  }, [isAdmin, getRecentActivity]);
 
   // Check session timeout periodically
   useEffect(() => {
@@ -110,30 +142,30 @@ const AdminDashboard = () => {
   const adminStats = [
     {
       title: "Active Users",
-      value: "1,247",
+      value: statsLoading ? "..." : stats.activeUsers.toLocaleString(),
       icon: Users,
-      trend: "+12.3%",
+      trend: `${stats.totalComments} feedback`,
       color: "text-primary"
     },
     {
-      title: "Flagged Posts",
-      value: "23",
+      title: "Flagged Content",
+      value: statsLoading ? "..." : stats.flaggedPosts.toString(),
       icon: Flag,
-      trend: "Needs Review",
-      color: "text-warning"
+      trend: stats.userReports > 0 ? "Needs Review" : "All Clear",
+      color: stats.flaggedPosts > 0 ? "text-warning" : "text-success"
     },
     {
       title: "User Reports",
-      value: "8",
+      value: statsLoading ? "..." : stats.userReports.toString(),
       icon: AlertTriangle,
-      trend: "Pending",
-      color: "text-destructive"
+      trend: stats.userReports > 0 ? "Pending" : "None",
+      color: stats.userReports > 0 ? "text-destructive" : "text-success"
     },
     {
       title: "Strike Actions",
-      value: "5",
+      value: statsLoading ? "..." : stats.strikeActions.toString(),
       icon: Ban,
-      trend: "Last 24h",
+      trend: `${stats.suspendedUsers} suspended`,
       color: "text-muted-foreground"
     }
   ];
@@ -157,9 +189,15 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-            <Badge variant="secondary" className="bg-primary/10 text-primary">
-              Administrator • {user?.email}
-            </Badge>
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="bg-primary/10 text-primary">
+                Administrator • {user?.email}
+              </Badge>
+              <AdminRealTimeStatus 
+                isConnected={realtimeConnected} 
+                lastUpdate={lastUpdate}
+              />
+            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -256,36 +294,30 @@ const AdminDashboard = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-success" />
-                      <div>
-                        <p className="font-medium text-foreground">Content approved</p>
-                        <p className="text-sm text-muted-foreground">Step 2 media updated</p>
-                      </div>
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No recent activity
                     </div>
-                    <span className="text-xs text-muted-foreground">2 min ago</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Ban className="h-5 w-5 text-destructive" />
-                      <div>
-                        <p className="font-medium text-foreground">User suspended</p>
-                        <p className="text-sm text-muted-foreground">3 strikes reached</p>
+                  ) : (
+                    recentActivity.map((activity, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {activity.type === 'moderation' && <Ban className="h-5 w-5 text-destructive" />}
+                          {activity.type === 'report' && <Flag className="h-5 w-5 text-warning" />}
+                          {activity.type === 'admin' && <CheckCircle className="h-5 w-5 text-success" />}
+                          <div>
+                            <p className="font-medium text-foreground">{activity.details}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)} action
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(activity.timestamp).toLocaleString()}
+                        </span>
                       </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground">15 min ago</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Flag className="h-5 w-5 text-warning" />
-                      <div>
-                        <p className="font-medium text-foreground">Report reviewed</p>
-                        <p className="text-sm text-muted-foreground">Spam comment removed</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-muted-foreground">1 hr ago</span>
-                  </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -300,6 +332,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="accounts">
               <AdminAccountManager />
+            </TabsContent>
+
+            <TabsContent value="oversight">
+              <AdminOversight />
             </TabsContent>
 
             <TabsContent value="security">
