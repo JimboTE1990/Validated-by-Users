@@ -16,9 +16,33 @@ export const useModeration = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const classifyContent = (content: string): { classification: "valid" | "spam"; reason: string } => {
+  const classifyContent = (content: string, isEdit: boolean = false, previousContent: string = ""): { classification: "valid" | "spam"; reason: string } => {
     const trimmedContent = content.trim().toLowerCase();
     
+    // For edits, calculate similarity to previous content
+    if (isEdit && previousContent) {
+      const prevTrimmed = previousContent.trim().toLowerCase();
+      const similarity = calculateSimilarity(prevTrimmed, trimmedContent);
+      
+      // If content is very similar (>70% similarity), be more lenient
+      if (similarity > 0.7) {
+        // Only check for the most obvious spam patterns on edits
+        const obviousSpamPattern = /[bcdfghjklmnpqrstvwxyz]{6,}|[^a-zA-Z0-9\s]{5,}/i;
+        if (obviousSpamPattern.test(trimmedContent) && trimmedContent.length < 30) {
+          return {
+            classification: "spam",
+            reason: "Content contains obvious spam patterns"
+          };
+        }
+        
+        // For similar edits, assume it's legitimate (typo fixes, etc.)
+        return {
+          classification: "valid",
+          reason: "Edit appears to be minor corrections to existing content"
+        };
+      }
+    }
+
     // Check for random/nonsensical text (high percentage of consonants in a row, random characters)
     const randomPattern = /[bcdfghjklmnpqrstvwxyz]{4,}|[aeiou]{4,}|[^a-zA-Z0-9\s]{3,}/i;
     if (randomPattern.test(trimmedContent) && trimmedContent.length < 50) {
@@ -28,13 +52,14 @@ export const useModeration = () => {
       };
     }
 
-    // Check for very short/vague responses
+    // Check for very short/vague responses (be more lenient for edits)
     const vaguePhrases = [
       "ok", "good", "nice", "cool", "great", "yes", "no", "thanks", "thx",
       "awesome", "lol", "haha", "wow", "meh", "nah", "yep", "sure", "fine"
     ];
     
-    if (trimmedContent.length < 10 && vaguePhrases.includes(trimmedContent)) {
+    const minLength = isEdit ? 5 : 10; // More lenient for edits
+    if (trimmedContent.length < minLength && vaguePhrases.includes(trimmedContent)) {
       return {
         classification: "spam", 
         reason: "Content is too vague or short to provide actionable feedback"
@@ -49,7 +74,7 @@ export const useModeration = () => {
         return acc;
       }, {} as Record<string, number>);
       
-      const repeatedWords = Object.values(wordCounts).filter(count => count > 3);
+      const repeatedWords = Object.values(wordCounts).filter(count => count > (isEdit ? 4 : 3)); // More lenient for edits
       if (repeatedWords.length > 0) {
         return {
           classification: "spam",
@@ -58,21 +83,23 @@ export const useModeration = () => {
       }
     }
 
-    // Check for generic copy-paste phrases
-    const genericPhrases = [
-      "this is great", "looks good", "i like it", "not bad", "could be better",
-      "nice work", "keep it up", "well done", "not for me", "interesting idea"
-    ];
-    
-    const hasGenericPhrase = genericPhrases.some(phrase => 
-      trimmedContent.includes(phrase) && trimmedContent.length < phrase.length + 20
-    );
-    
-    if (hasGenericPhrase) {
-      return {
-        classification: "spam",
-        reason: "Content appears to be generic or copy-pasted feedback"
-      };
+    // Check for generic copy-paste phrases (skip for edits if content is similar to previous)
+    if (!isEdit) {
+      const genericPhrases = [
+        "this is great", "looks good", "i like it", "not bad", "could be better",
+        "nice work", "keep it up", "well done", "not for me", "interesting idea"
+      ];
+      
+      const hasGenericPhrase = genericPhrases.some(phrase => 
+        trimmedContent.includes(phrase) && trimmedContent.length < phrase.length + 20
+      );
+      
+      if (hasGenericPhrase) {
+        return {
+          classification: "spam",
+          reason: "Content appears to be generic or copy-pasted feedback"
+        };
+      }
     }
 
     // Content passes all spam checks
@@ -80,6 +107,46 @@ export const useModeration = () => {
       classification: "valid",
       reason: "Content appears to be genuine, relevant feedback"
     };
+  };
+
+  // Helper function to calculate similarity between two strings
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const distance = levenshteinDistance(longer, shorter);
+    return (longer.length - distance) / longer.length;
+  };
+
+  // Helper function to calculate Levenshtein distance
+  const levenshteinDistance = (str1: string, str2: string): number => {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
   };
 
   const getUserStrikes = async (userId: string): Promise<number> => {
@@ -103,13 +170,15 @@ export const useModeration = () => {
 
   const moderateContent = async (
     content: string,
-    postId: string
+    postId: string,
+    isEdit: boolean = false,
+    previousContent: string = ""
   ): Promise<ModerationResult> => {
     if (!user) {
       throw new Error("User not authenticated");
     }
 
-    const { classification, reason } = classifyContent(content);
+    const { classification, reason } = classifyContent(content, isEdit, previousContent);
     
     if (classification === "valid") {
       // Log the moderation result
@@ -134,7 +203,43 @@ export const useModeration = () => {
       };
     }
 
-    // Content is spam - get current strikes and increment
+    // For edits that are flagged as spam, don't increment strikes immediately
+    // Instead, give a warning first
+    if (isEdit) {
+      const currentStrikes = await getUserStrikes(user.id);
+      
+      // Log the moderation action but don't increment strikes for first edit offense
+      await supabase
+        .from("moderated_content")
+        .insert({
+          user_id: user.id,
+          content,
+          classification,
+          reason,
+          action_taken: "remove",
+          strike_level: currentStrikes,
+          related_post_id: postId
+        });
+
+      // Show a gentler warning for edits
+      const userMessage = "⚠️ Your edit appears to contain problematic content. Please ensure edits maintain quality feedback standards.";
+      
+      toast({
+        title: "Edit Rejected",
+        description: userMessage,
+        variant: "destructive",
+      });
+
+      return {
+        classification: "spam",
+        reason,
+        action: "remove",
+        strike_level: currentStrikes,
+        user_message: userMessage
+      };
+    }
+
+    // Content is spam for new submissions - get current strikes and increment
     const currentStrikes = await getUserStrikes(user.id);
     const newStrikeLevel = currentStrikes + 1;
 

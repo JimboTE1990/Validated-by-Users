@@ -128,17 +128,19 @@ const PostDetail = () => {
         return;
       }
 
+      // Check if user already has a comment for this post
+      const existingComment = post.comments?.find(comment => comment.user_id === user.id);
+      const isEdit = !!existingComment;
+      const previousContent = existingComment?.content || "";
+
       // Run moderation on the feedback content
-      const moderationResult = await moderateContent(feedback, post.id);
+      const moderationResult = await moderateContent(feedback, post.id, isEdit, previousContent);
       
       if (!moderationResult || moderationResult.classification === 'spam') {
-        // Moderation failed or content is spam - don't insert comment
+        // Moderation failed or content is spam - don't update comment
         // The moderation hook already shows the appropriate warning toast
         return;
       }
-
-      // Check if user already has a comment for this post
-      const existingComment = post.comments?.find(comment => comment.user_id === user.id);
 
       if (existingComment) {
         // Update existing comment
