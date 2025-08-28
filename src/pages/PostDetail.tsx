@@ -101,7 +101,7 @@ const PostDetail = () => {
         setAgreedToTerms(false);
       }
 
-      // Set post edit data if user is post author
+      // Set post edit data if user is post author (update with latest data)
       if (post.author_id === user.id) {
         setEditFormData({
           title: post.title,
@@ -271,7 +271,9 @@ const PostDetail = () => {
       if (error) throw error;
 
       setIsEditingPost(false);
-      refetch();
+      
+      // Refresh the post data and update local edit form with the new values
+      await refetch();
       
       toast({
         title: "Post Updated!",
@@ -730,9 +732,26 @@ const PostDetail = () => {
             {canComment && (
               <Card id="feedback-form" className="border-0 bg-gradient-card shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg">
-                    {hasSubmitted ? "Edit Your Feedback" : "Leave Feedback"}
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">
+                      {hasSubmitted ? "Edit Your Feedback" : "Leave Feedback"}
+                    </CardTitle>
+                    {hasSubmitted && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          document.getElementById('feedback-form')?.scrollIntoView({ behavior: 'smooth' });
+                          const textarea = document.querySelector('#feedback-form textarea') as HTMLTextAreaElement;
+                          setTimeout(() => textarea?.focus(), 300);
+                        }}
+                        className="text-xs"
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {hasSubmitted 
                       ? "You can edit your feedback below. Changes will update your existing entry."
