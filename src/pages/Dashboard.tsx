@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
 import { useUserActivities } from "@/hooks/useUserActivities";
+import { useUserReviews } from "@/hooks/useUserReviews";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +27,19 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  CreditCard
+  CreditCard,
+  AlertTriangle,
+  Flag,
+  Mail
 } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile(user?.id);
   const { activities, activePools, loading: activitiesLoading, getTimeLeft } = useUserActivities(user?.id);
+  const { reviews, warnings, strikeInfo, loading: reviewsLoading } = useUserReviews();
 
-  const loading = profileLoading || activitiesLoading;
+  const loading = profileLoading || activitiesLoading || reviewsLoading;
 
   const stats = [
     {
@@ -138,10 +143,14 @@ const Dashboard = () => {
 
         {/* Comprehensive Activity Tabs */}
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto mb-8">
             <TabsTrigger value="activity">
               <History className="h-4 w-4 mr-2" />
               Activity
+            </TabsTrigger>
+            <TabsTrigger value="reviews">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              My Reviews
             </TabsTrigger>
             <TabsTrigger value="active-pools">
               <Trophy className="h-4 w-4 mr-2" />
@@ -225,6 +234,153 @@ const Dashboard = () => {
                   <div className="text-center py-8">
                     <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">No activity yet. Start participating in validation rounds!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reviews" className="space-y-4">
+            {/* Warnings Alert */}
+            {warnings.length > 0 && (
+              <Card className="border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    Account Warnings ({warnings.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {warnings.slice(0, 3).map((warning) => (
+                      <div key={warning.id} className="p-3 bg-muted/30 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <Badge variant="destructive" className="text-xs">
+                            Strike {warning.strike_level}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(warning.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground mb-1">{warning.reason}</p>
+                        <p className="text-xs text-muted-foreground">Action: {warning.action_taken}</p>
+                      </div>
+                    ))}
+                    {strikeInfo && strikeInfo.strike_count > 0 && (
+                      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Current Strike Count: {strikeInfo.strike_count}/3</p>
+                          <p className="text-xs text-muted-foreground">
+                            {strikeInfo.is_suspended ? 'Account is suspended' : 'Account is active'}
+                          </p>
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to="/contact">
+                            <Mail className="h-3 w-3 mr-1" />
+                            Appeal
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Reviews List */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardHeader>
+                <CardTitle>My Submitted Reviews</CardTitle>
+                <p className="text-sm text-muted-foreground">Track the status of your feedback and resolve any issues</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="h-10 w-10 bg-muted rounded-full"></div>
+                          <div className="flex-1 space-y-2">
+                            <div className="h-4 bg-muted rounded w-3/4"></div>
+                            <div className="h-3 bg-muted rounded w-1/2"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-4 bg-muted rounded w-20"></div>
+                            <div className="h-6 bg-muted rounded w-16"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review.id} className="flex items-start justify-between p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-start space-x-4 flex-1">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                          review.report_status === 'active' ? 'bg-success/10' : 
+                          review.report_status === 'reported_for_review' ? 'bg-warning/10' :
+                          'bg-destructive/10'
+                        }`}>
+                          {review.report_status === 'active' ? (
+                            <CheckCircle className="h-5 w-5 text-success" />
+                          ) : review.report_status === 'reported_for_review' ? (
+                            <Flag className="h-5 w-5 text-warning" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-destructive" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground text-sm">{review.post_title}</div>
+                          <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {review.content}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {new Date(review.created_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </div>
+                          {review.report_reason && (
+                            <div className="text-xs text-warning mt-1">
+                              Reason: {review.report_reason}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right space-y-2">
+                        <Badge 
+                          variant={
+                            review.report_status === 'active' ? 'default' :
+                            review.report_status === 'reported_for_review' ? 'secondary' :
+                            'destructive'
+                          }
+                          className="text-xs"
+                        >
+                          {review.report_status === 'active' ? 'Active' :
+                           review.report_status === 'reported_for_review' ? 'Under Review' :
+                           'Removed'}
+                        </Badge>
+                        {(review.report_status === 'reported_for_review' || review.report_status === 'removed_by_admin') && (
+                          <div className="space-y-1">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to="/contact" className="text-xs">
+                                <Mail className="h-3 w-3 mr-1" />
+                                Appeal
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No reviews submitted yet. Start providing feedback to help validate products!</p>
+                    <Button variant="outline" className="mt-4" asChild>
+                      <Link to="/feed">Browse Posts</Link>
+                    </Button>
                   </div>
                 )}
               </CardContent>

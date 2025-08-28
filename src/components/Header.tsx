@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Zap } from "lucide-react";
+import { Trophy, Users, Zap, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 
 const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminRole();
 
   const handleSignOut = async () => {
     try {
@@ -68,6 +70,14 @@ const Header = () => {
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>
+                {isAdmin && (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/admin-dashboard" className="flex items-center gap-1">
+                      <Shield className="h-3 w-3" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleSignOut}>
                   Sign Out
                 </Button>
