@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      admin_sessions: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_active: boolean
+          last_activity: string
+          session_token: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          last_activity?: string
+          session_token: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_active?: boolean
+          last_activity?: string
+          session_token?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -485,6 +557,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_admin_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_comments_for_author: {
         Args: { p_post_id: string }
         Returns: {
@@ -514,6 +590,17 @@ export type Database = {
           new_strike_count: number
         }[]
       }
+      log_admin_activity: {
+        Args: {
+          p_action_type: string
+          p_details?: Json
+          p_ip_address?: string
+          p_resource_id?: string
+          p_resource_type?: string
+          p_user_agent?: string
+        }
+        Returns: string
+      }
       report_feedback_as_author: {
         Args: {
           p_comment_id: string
@@ -521,6 +608,14 @@ export type Database = {
           p_report_reason: string
         }
         Returns: Json
+      }
+      verify_admin_access: {
+        Args: { session_token?: string }
+        Returns: {
+          expires_at: string
+          is_valid: boolean
+          user_id: string
+        }[]
       }
     }
     Enums: {
