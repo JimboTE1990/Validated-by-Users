@@ -296,6 +296,56 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          admin_fee: number | null
+          amount: number | null
+          created_at: string
+          currency: string | null
+          id: string
+          post_id: string | null
+          prize_pool: number | null
+          status: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_fee?: number | null
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          post_id?: string | null
+          prize_pool?: number | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_fee?: number | null
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          post_id?: string | null
+          prize_pool?: number | null
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_images: {
         Row: {
           created_at: string

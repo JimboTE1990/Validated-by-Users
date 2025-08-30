@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, CreditCard, Shield, Trophy } from "lucide-react";
 import Header from "@/components/Header";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Checkout = () => {
   const location = useLocation();
@@ -23,11 +24,29 @@ const Checkout = () => {
   const handlePayment = async () => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          postId: location.state?.postId,
+          prizePool,
+          adminFee,
+          totalCost
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No payment URL received');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
       setIsProcessing(false);
-      navigate('/payment-success');
-    }, 2000);
+      // You could add a toast notification here for error handling
+    }
   };
 
   return (
@@ -92,7 +111,7 @@ const Checkout = () => {
                 <div className="bg-muted/30 p-4 rounded-lg text-center">
                   <Shield className="h-8 w-8 mx-auto text-success mb-2" />
                   <p className="text-sm text-muted-foreground mb-4">
-                    This is a demo checkout. In production, this would integrate with Stripe for secure payments.
+                    Secure payment powered by Stripe. You will be redirected to complete your payment.
                   </p>
                   
                   <Button 
