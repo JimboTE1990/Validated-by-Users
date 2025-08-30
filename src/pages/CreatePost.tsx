@@ -108,8 +108,7 @@ const CreatePost = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleFinalSubmit = async () => {
-    
+  const handleProceedToPayment = async () => {
     if (scheduleType === "later" && (!scheduleDate || !scheduleTime)) {
       toast({
         title: "Missing Information",
@@ -156,44 +155,35 @@ const CreatePost = () => {
       const endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + parseInt(formData.duration));
 
-      // Create post
-      const { data: post, error: postError } = await supabase
-        .from('posts')
-        .insert({
-          title: formData.title,
-          description: formData.description,
-          product_link: formData.productLink || null,
-          prize_pool: parseFloat(formData.prizePool),
-          category_id: formData.categoryId,
-          author_id: user.id,
-          start_date: startDate.toISOString(),
-          end_date: endDate.toISOString(),
-          status: 'active'
-        })
-        .select()
-        .single();
+      // Calculate pricing
+      const prizeAmount = parseFloat(formData.prizePool);
+      const adminFee = prizeAmount * 0.15;
+      const totalCost = prizeAmount + adminFee;
 
-      if (postError) throw postError;
-
-      // Upload images if any
-      if (selectedFiles.length > 0) {
-        const fileList = new DataTransfer();
-        selectedFiles.forEach(file => fileList.items.add(file));
-        await uploadImages(fileList.files, post.id);
-      }
-
-      toast({
-        title: "Post Created Successfully!",
-        description: scheduleType === "now" 
-          ? "Your validation round is now live." 
-          : "Your validation round has been scheduled."
+      // Navigate to checkout with post data
+      navigate('/checkout', {
+        state: {
+          prizePool: prizeAmount,
+          adminFee,
+          totalCost,
+          postData: {
+            title: formData.title,
+            description: formData.description,
+            product_link: formData.productLink || null,
+            prize_pool: prizeAmount,
+            category_id: formData.categoryId,
+            author_id: user.id,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            status: 'active'
+          },
+          selectedFiles
+        }
       });
-
-      navigate(`/post/${post.id}`);
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error('Error preparing checkout:', error);
       toast({
-        title: "Failed to Create Post",
+        title: "Error",
         description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive"
       });
@@ -603,13 +593,16 @@ const CreatePost = () => {
               </div>
             </div>
 
-            {/* Payment Options (Dummy for now) */}
+            {/* Payment Method */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Payment Method</h3>
               <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 text-center">
-                <p className="text-muted-foreground mb-4">Payment integration coming soon!</p>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Secure Payment via Stripe</span>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  For now, clicking "Launch Post" will create your post immediately.
+                  You'll be redirected to Stripe's secure checkout to complete your payment.
                 </p>
               </div>
             </div>
@@ -627,13 +620,13 @@ const CreatePost = () => {
               </Button>
               <Button 
                 type="button"
-                onClick={handleFinalSubmit}
+                onClick={handleProceedToPayment}
                 variant="hero" 
                 size="lg" 
                 className="min-w-[160px]"
                 disabled={isSubmitting || uploading}
               >
-                {isSubmitting ? "Creating..." : uploading ? "Uploading..." : "Launch Post"}
+                {isSubmitting ? "Preparing..." : uploading ? "Uploading..." : "Proceed to Payment"}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>

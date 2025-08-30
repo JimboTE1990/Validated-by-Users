@@ -46,21 +46,56 @@ serve(async (req) => {
       status: session.status 
     });
 
+    // If payment is successful, create the post
+    let postId = null;
+    if (session.payment_status === 'paid' && session.metadata?.postData) {
+      try {
+        const postData = JSON.parse(session.metadata.postData);
+        logStep("Creating post from metadata", { postData });
+
+        // Create post
+        const { data: post, error: postError } = await supabaseService
+          .from('posts')
+          .insert(postData)
+          .select()
+          .single();
+
+        if (postError) {
+          logStep("Error creating post", { error: postError });
+          throw postError;
+        }
+
+        postId = post.id;
+        logStep("Post created successfully", { postId });
+
+        // Note: File uploads would need to be handled separately
+        // as we can't pass files through Stripe metadata
+      } catch (error) {
+        logStep("Error in post creation", { error: error.message });
+      }
+    }
+
     // Update order status in database
     const newStatus = session.payment_status === 'paid' ? 'paid' : 'failed';
+    const updateData: any = { 
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    };
+    
+    if (postId) {
+      updateData.post_id = postId;
+    }
+
     const { error: updateError } = await supabaseService
       .from("orders")
-      .update({ 
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq("stripe_session_id", sessionId);
 
     if (updateError) {
       logStep("Error updating order", { error: updateError });
       throw new Error(`Failed to update order: ${updateError.message}`);
     }
-    logStep("Order status updated", { status: newStatus });
+    logStep("Order status updated", { status: newStatus, postId });
 
     // Return payment verification result
     return new Response(JSON.stringify({
@@ -69,6 +104,7 @@ serve(async (req) => {
       sessionId: session.id,
       amount: session.amount_total,
       currency: session.currency,
+      postId
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -27,10 +27,11 @@ const Checkout = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
-          postId: location.state?.postId,
           prizePool,
           adminFee,
-          totalCost
+          totalCost,
+          postData: location.state?.postData,
+          selectedFiles: location.state?.selectedFiles || null
         }
       });
 

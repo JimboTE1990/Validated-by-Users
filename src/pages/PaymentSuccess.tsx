@@ -106,31 +106,40 @@ const PaymentSuccess = () => {
             </p>
           </div>
 
-          {paymentDetails && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Payment Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Amount Paid</span>
-                  <span className="font-medium">
-                    £{(paymentDetails.amount / 100).toFixed(2)}
-                  </span>
+        {paymentVerified && paymentDetails && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Payment Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between">
+                <span>Amount Paid</span>
+                <span className="font-medium">
+                  £{(paymentDetails.amount / 100).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Transaction ID</span>
+                <span className="font-mono text-sm text-muted-foreground">
+                  {paymentDetails.sessionId.slice(0, 20)}...
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Status</span>
+                <span className="text-success font-medium">Paid</span>
+              </div>
+              {paymentDetails.postId && (
+                <div className="mt-4">
+                  <Link to={`/post/${paymentDetails.postId}`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Your Post
+                    </Button>
+                  </Link>
                 </div>
-                <div className="flex justify-between">
-                  <span>Transaction ID</span>
-                  <span className="font-mono text-sm text-muted-foreground">
-                    {paymentDetails.sessionId.slice(0, 20)}...
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Status</span>
-                  <span className="text-success font-medium">Paid</span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
+        )}
 
           <Card className="mb-8">
             <CardContent className="p-6">

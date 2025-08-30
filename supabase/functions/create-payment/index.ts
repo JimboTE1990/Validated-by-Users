@@ -42,8 +42,8 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Get request body
-    const { postId, prizePool, adminFee, totalCost } = await req.json();
-    logStep("Payment request received", { postId, prizePool, adminFee, totalCost });
+    const { postId, prizePool, adminFee, totalCost, postData, selectedFiles } = await req.json();
+    logStep("Payment request received", { prizePool, adminFee, totalCost, postData });
 
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -82,22 +82,23 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/checkout`,
       metadata: {
-        postId,
         userId: user.id,
         prizePool: prizePool.toString(),
         adminFee: adminFee.toString(),
+        postData: JSON.stringify(postData),
+        hasFiles: selectedFiles ? 'true' : 'false'
       },
     });
     logStep("Stripe checkout session created", { sessionId: session.id });
 
-    // Save order to database
+    // Save order to database with post data
     const { error: orderError } = await supabaseService.from("orders").insert({
       user_id: user.id,
       stripe_session_id: session.id,
       amount: Math.round(totalCost * 100), // Store in pence
       currency: "gbp",
       status: "pending",
-      post_id: postId,
+      post_id: null, // Will be updated after post creation
       prize_pool: prizePool,
       admin_fee: adminFee,
     });
