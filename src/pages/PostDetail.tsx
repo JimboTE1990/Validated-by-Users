@@ -880,7 +880,29 @@ const PostDetail = () => {
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Engagement</span>
                   </div>
-                  <span className="font-semibold text-success">High</span>
+                  <span className={`font-semibold ${
+                    (() => {
+                      const commentCount = post.comments?.length || 0;
+                      const entryCount = post.current_entries || 0;
+                      const boostedCount = post.comments?.filter(c => c.is_boosted).length || 0;
+                      const totalEngagement = commentCount + entryCount + (boostedCount * 2);
+                      
+                      if (totalEngagement >= 15) return 'text-success';
+                      if (totalEngagement >= 8) return 'text-warning';
+                      return 'text-muted-foreground';
+                    })()
+                  }`}>
+                    {(() => {
+                      const commentCount = post.comments?.length || 0;
+                      const entryCount = post.current_entries || 0;
+                      const boostedCount = post.comments?.filter(c => c.is_boosted).length || 0;
+                      const totalEngagement = commentCount + entryCount + (boostedCount * 2);
+                      
+                      if (totalEngagement >= 15) return 'High';
+                      if (totalEngagement >= 8) return 'Medium';
+                      return 'Low';
+                    })()}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
