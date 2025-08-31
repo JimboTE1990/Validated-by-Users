@@ -61,9 +61,14 @@ const PostCard = ({
     <Card className="group relative overflow-hidden border-0 bg-gradient-card shadow-sm hover:shadow-card-hover transition-smooth">
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
-            {category}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-0">
+              {category}
+            </Badge>
+            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
+              TEST
+            </Badge>
+          </div>
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span>{timeLeft}</span>

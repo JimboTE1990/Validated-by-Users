@@ -139,6 +139,13 @@ const Feed = () => {
       <Header />
       
       <div className="container py-8">
+        {/* Test Disclaimer Banner */}
+        <div className="mb-8 p-4 bg-warning/10 border border-warning/20 rounded-lg text-center">
+          <p className="text-warning font-medium text-sm">
+            ⚠️ <strong>TEST MODE:</strong> These are sample requests for testing purposes only. No real prizes available and no actual products are being validated.
+          </p>
+        </div>
+        
         {/* Header Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
