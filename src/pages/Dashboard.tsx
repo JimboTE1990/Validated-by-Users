@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
 import { useUserActivities } from "@/hooks/useUserActivities";
 import { useUserReviews } from "@/hooks/useUserReviews";
+import { useUserPosts } from "@/hooks/useUserPosts";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +31,10 @@ import {
   CreditCard,
   AlertTriangle,
   Flag,
-  Mail
+  Mail,
+  BarChart3,
+  Zap,
+  FileText
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -38,8 +42,9 @@ const Dashboard = () => {
   const { profile, loading: profileLoading } = useProfile(user?.id);
   const { activities, activePools, loading: activitiesLoading, getTimeLeft } = useUserActivities(user?.id);
   const { reviews, warnings, strikeInfo, loading: reviewsLoading } = useUserReviews();
+  const { posts: userPosts, loading: userPostsLoading, boostComment, getTimeLeft: getPostTimeLeft } = useUserPosts();
 
-  const loading = profileLoading || activitiesLoading || reviewsLoading;
+  const loading = profileLoading || activitiesLoading || reviewsLoading || userPostsLoading;
 
   const stats = [
     {
@@ -143,10 +148,14 @@ const Dashboard = () => {
 
         {/* Comprehensive Activity Tabs */}
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto mb-8">
             <TabsTrigger value="activity">
               <History className="h-4 w-4 mr-2" />
               Activity
+            </TabsTrigger>
+            <TabsTrigger value="my-posts">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              My Posts
             </TabsTrigger>
             <TabsTrigger value="reviews">
               <MessageCircle className="h-4 w-4 mr-2" />
@@ -234,6 +243,149 @@ const Dashboard = () => {
                   <div className="text-center py-8">
                     <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">No activity yet. Start participating in validation rounds!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="my-posts" className="space-y-4">
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardHeader>
+                <CardTitle>My Posts & Engagement</CardTitle>
+                <p className="text-sm text-muted-foreground">Monitor engagement on your validation requests and boost high-quality feedback</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {loading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="flex-1 space-y-3">
+                            <div className="h-5 bg-muted rounded w-3/4"></div>
+                            <div className="h-4 bg-muted rounded w-1/2"></div>
+                            <div className="flex space-x-4">
+                              <div className="h-4 bg-muted rounded w-20"></div>
+                              <div className="h-4 bg-muted rounded w-20"></div>
+                              <div className="h-4 bg-muted rounded w-20"></div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="h-9 bg-muted rounded w-24"></div>
+                            <div className="h-9 bg-muted rounded w-24"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : userPosts.length > 0 ? userPosts.map((post) => (
+                  <div key={post.id} className="p-4 bg-muted/30 rounded-lg">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-lg font-semibold text-foreground">{post.title}</h3>
+                          <Badge variant={post.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                            {post.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {post.description}
+                        </p>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <MessageCircle className="h-4 w-4 text-primary" />
+                            <span className="font-medium">{post.engagement_stats.total_comments}</span>
+                            <span className="text-muted-foreground">comments</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4 text-accent" />
+                            <span className="font-medium">{post.engagement_stats.total_entries}</span>
+                            <span className="text-muted-foreground">entries</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-4 w-4 text-success" />
+                            <span className="font-medium">{post.engagement_stats.active_commenters}</span>
+                            <span className="text-muted-foreground">reviewers</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-4 w-4 text-warning" />
+                            <span className="font-medium">£{post.prize_pool}</span>
+                            <span className="text-muted-foreground">pool</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4">
+                        <div className="text-right text-sm text-muted-foreground mb-2">
+                          {getPostTimeLeft(post.end_date)}
+                        </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/post/${post.id}`}>
+                            <Eye className="h-3 w-3 mr-1" />
+                            View Details
+                          </Link>
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="secondary" size="sm" disabled={post.engagement_stats.total_comments === 0}>
+                              <Zap className="h-3 w-3 mr-1" />
+                              Boost Entries
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Boost Entries for "{post.title}"</DialogTitle>
+                            </DialogHeader>
+                            <div className="py-4">
+                              <p className="text-sm text-muted-foreground mb-4">
+                                Select high-quality feedback to boost and give those users bonus entries in your prize pool.
+                              </p>
+                              <div className="space-y-3">
+                                {post.engagement_stats.total_comments > 0 ? (
+                                  <div className="text-center p-4 bg-muted/20 rounded-lg">
+                                    <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                    <p className="text-sm text-muted-foreground">
+                                      Visit the post details page to view and boost individual comments
+                                    </p>
+                                    <Button className="mt-3" asChild>
+                                      <Link to={`/post/${post.id}`}>
+                                        Go to Post Details
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="text-center p-4 bg-muted/20 rounded-lg">
+                                    <p className="text-sm text-muted-foreground">No comments to boost yet</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Created {new Date(post.created_at).toLocaleDateString('en-GB')}</span>
+                        {post.category && (
+                          <>
+                            <span>•</span>
+                            <span>{post.category.name}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {post.current_entries}/{post.max_entries} entries
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No posts created yet. Start by creating your first validation request!</p>
+                    <Button variant="outline" className="mt-4" asChild>
+                      <Link to="/create-post">Create Your First Post</Link>
+                    </Button>
                   </div>
                 )}
               </CardContent>
