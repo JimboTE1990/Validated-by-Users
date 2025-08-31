@@ -21,6 +21,7 @@ export interface UserPost {
     total_comments: number;
     total_entries: number;
     active_commenters: number;
+    boosted_comments: number;
   };
 }
 
@@ -68,7 +69,7 @@ export const useUserPosts = () => {
           // Get comment count and engagement stats
           const { data: comments, error: commentsError } = await supabase
             .from('comments')
-            .select('id, user_id')
+            .select('id, user_id, is_boosted')
             .eq('post_id', post.id)
             .eq('report_status', 'active');
 
@@ -90,6 +91,7 @@ export const useUserPosts = () => {
           const commentCount = comments?.length || 0;
           const entriesCount = entries?.length || 0;
           const uniqueCommenters = new Set(comments?.map(c => c.user_id) || []).size;
+          const boostedCommentsCount = comments?.filter(c => c.is_boosted)?.length || 0;
 
           return {
             ...post,
@@ -98,6 +100,7 @@ export const useUserPosts = () => {
               total_comments: commentCount,
               total_entries: entriesCount,
               active_commenters: uniqueCommenters,
+              boosted_comments: boostedCommentsCount,
             }
           } as UserPost;
         })

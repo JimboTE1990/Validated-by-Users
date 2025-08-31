@@ -24,6 +24,8 @@ interface CommentItemProps {
   isPostAuthor?: boolean;
   postAuthorId?: string;
   onReport?: () => void;
+  onBoost?: (commentId: string) => void;
+  canBoost?: boolean;
 }
 
 export const CommentItem = ({
@@ -36,7 +38,9 @@ export const CommentItem = ({
   isBoosted,
   isPostAuthor,
   postAuthorId,
-  onReport
+  onReport,
+  onBoost,
+  canBoost
 }: CommentItemProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const { user } = useAuth();
@@ -105,10 +109,11 @@ export const CommentItem = ({
                   {likes + (isLiked ? 1 : 0)}
                 </Button>
                 
-                {isPostAuthor && (
+                {isCurrentUserPostAuthor && !isBoosted && canBoost && onBoost && (
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => onBoost(id)}
                     className="h-8 px-2 text-muted-foreground hover:text-primary"
                   >
                     <Zap className="h-4 w-4 mr-1" />

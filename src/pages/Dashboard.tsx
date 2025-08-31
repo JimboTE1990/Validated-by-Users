@@ -308,6 +308,11 @@ const Dashboard = () => {
                             <span className="text-muted-foreground">reviewers</span>
                           </div>
                           <div className="flex items-center gap-1">
+                            <Zap className="h-4 w-4 text-warning" />
+                            <span className="font-medium">{post.engagement_stats.boosted_comments}</span>
+                            <span className="text-muted-foreground">boosted</span>
+                          </div>
+                          <div className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4 text-warning" />
                             <span className="font-medium">£{post.prize_pool}</span>
                             <span className="text-muted-foreground">pool</span>

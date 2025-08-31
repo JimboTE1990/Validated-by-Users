@@ -101,6 +101,14 @@ const PostDetail = () => {
         setAgreedToTerms(false);
       }
 
+      // Initialize boosted comments set from existing data
+      if (post.comments) {
+        const boostedIds = new Set(
+          post.comments.filter(comment => comment.is_boosted).map(comment => comment.id)
+        );
+        setBoostedComments(boostedIds);
+      }
+
       // Set post edit data if user is post author (update with latest data)
       if (post.author_id === user.id) {
         setEditFormData({
