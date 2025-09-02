@@ -382,6 +382,7 @@ export type Database = {
         Row: {
           author_id: string | null
           category_id: string | null
+          contest_completed: boolean | null
           created_at: string
           current_entries: number | null
           description: string
@@ -395,10 +396,12 @@ export type Database = {
           status: string | null
           title: string
           updated_at: string
+          winners_selected_at: string | null
         }
         Insert: {
           author_id?: string | null
           category_id?: string | null
+          contest_completed?: boolean | null
           created_at?: string
           current_entries?: number | null
           description: string
@@ -412,10 +415,12 @@ export type Database = {
           status?: string | null
           title: string
           updated_at?: string
+          winners_selected_at?: string | null
         }
         Update: {
           author_id?: string | null
           category_id?: string | null
+          contest_completed?: boolean | null
           created_at?: string
           current_entries?: number | null
           description?: string
@@ -429,6 +434,7 @@ export type Database = {
           status?: string | null
           title?: string
           updated_at?: string
+          winners_selected_at?: string | null
         }
         Relationships: [
           {
@@ -607,6 +613,45 @@ export type Database = {
           last_strike_at?: string | null
           strike_count?: number
           suspended_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      winners: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          payout_status: string | null
+          position: number
+          post_id: string
+          prize_amount: number
+          stripe_transfer_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          payout_status?: string | null
+          position: number
+          post_id: string
+          prize_amount: number
+          stripe_transfer_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          payout_status?: string | null
+          position?: number
+          post_id?: string
+          prize_amount?: number
+          stripe_transfer_id?: string | null
           updated_at?: string
           user_id?: string
         }

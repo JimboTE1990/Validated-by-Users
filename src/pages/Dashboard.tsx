@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Header from "@/components/Header";
+import { WinnerManagement } from "@/components/WinnerManagement";
 import { Link } from "react-router-dom";
 import { 
   Trophy, 
@@ -367,9 +368,23 @@ const Dashboard = () => {
                           </DialogContent>
                         </Dialog>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-3 border-t border-border">
+                     </div>
+                     
+                     {/* Winner Management Section */}
+                     <div className="mt-4">
+                       <WinnerManagement 
+                         postId={post.id}
+                         endDate={post.end_date}
+                         contestCompleted={false}
+                         prizePool={Number(post.prize_pool)}
+                         onStatusChange={() => {
+                           // Refresh posts when contest status changes
+                           window.location.reload();
+                         }}
+                       />
+                     </div>
+                     
+                     <div className="flex items-center justify-between pt-3 border-t border-border">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>Created {new Date(post.created_at).toLocaleDateString('en-GB')}</span>
                         {post.category && (

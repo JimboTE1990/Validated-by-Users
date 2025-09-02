@@ -1,17 +1,31 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Trophy, Calendar, AlertCircle } from "lucide-react";
+import { CheckCircle, Trophy, Calendar, AlertCircle, Upload, X } from "lucide-react";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
+import { usePostFileUpload } from "@/hooks/usePostFileUpload";
+import { useToast } from "@/hooks/use-toast";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { toast } = useToast();
+  const { uploadPostFiles, uploading } = usePostFileUpload();
   const [paymentVerified, setPaymentVerified] = useState<boolean | null>(null);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+  const [filesUploaded, setFilesUploaded] = useState(false);
   
   const sessionId = searchParams.get('session_id');
+
+  // Get files from location state (passed from checkout)
+  useEffect(() => {
+    if (location.state?.selectedFiles) {
+      setFilesToUpload(location.state.selectedFiles);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -137,6 +151,60 @@ const PaymentSuccess = () => {
                   </Link>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* File Upload Section */}
+        {paymentDetails?.postId && filesToUpload.length > 0 && !filesUploaded && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Upload Your Files
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Upload the files you selected during post creation to complete your listing.
+                </p>
+                
+                <div className="space-y-2">
+                  {filesToUpload.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                      <span className="text-sm truncate flex-1">{file.name}</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  onClick={async () => {
+                    const uploaded = await uploadPostFiles(paymentDetails.postId, filesToUpload);
+                    if (uploaded.length > 0) {
+                      setFilesUploaded(true);
+                    }
+                  }}
+                  disabled={uploading}
+                  className="w-full"
+                >
+                  {uploading ? "Uploading..." : "Upload Files"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {filesUploaded && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-success">
+                <CheckCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">Files uploaded successfully!</span>
+              </div>
             </CardContent>
           </Card>
         )}
