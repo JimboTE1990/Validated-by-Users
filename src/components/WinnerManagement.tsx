@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, DollarSign, Users, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Trophy, DollarSign, Users, Clock, CheckCircle, XCircle, Shield } from 'lucide-react';
 import { useWinnerManagement } from '@/hooks/useWinnerManagement';
 
 interface WinnerManagementProps {
@@ -23,6 +23,7 @@ export const WinnerManagement = ({
   const { selectWinners, processPayouts, getWinners, loading } = useWinnerManagement();
   const [winners, setWinners] = useState<any[]>([]);
   const [winnersLoaded, setWinnersLoaded] = useState(false);
+  const [extensionInfo, setExtensionInfo] = useState<any>(null);
 
   const isExpired = new Date() >= new Date(endDate);
   const canSelectWinners = isExpired && !contestCompleted;
@@ -44,9 +45,18 @@ export const WinnerManagement = ({
   const handleSelectWinners = async () => {
     const result = await selectWinners(postId);
     if (result.success) {
-      setWinners(result.winners || []);
-      setWinnersLoaded(true);
-      onStatusChange?.();
+      if (result.extended) {
+        // Contest was auto-extended
+        setExtensionInfo({
+          newEndDate: result.newEndDate,
+          message: result.message
+        });
+        onStatusChange?.(); // Refresh parent to show new end date
+      } else {
+        setWinners(result.winners || []);
+        setWinnersLoaded(true);
+        onStatusChange?.();
+      }
     }
   };
 
@@ -80,9 +90,20 @@ export const WinnerManagement = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            Contest is still active. Winners will be selected after expiry.
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              Contest is still active. Winners will be selected after expiry.
+            </div>
+            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-4">
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                Posting Guarantee Active
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                If your contest doesn't receive enough entries, we'll automatically extend it by 7 days (up to 2 times) to ensure you get quality feedback.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -98,6 +119,14 @@ export const WinnerManagement = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Extension Info */}
+        {extensionInfo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">Contest Auto-Extended</h4>
+            <p className="text-sm text-blue-700">{extensionInfo.message}</p>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-3">
           {canSelectWinners && (
@@ -107,7 +136,7 @@ export const WinnerManagement = ({
               className="flex-1"
             >
               <Users className="h-4 w-4 mr-2" />
-              Select Winners
+              {loading ? "Processing..." : "Select Winners (Random)"}
             </Button>
           )}
           
@@ -160,7 +189,7 @@ export const WinnerManagement = ({
 
             {/* Summary */}
             <div className="bg-muted/50 rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Total Prize Pool:</span>
                   <p className="font-semibold">£{prizePool.toFixed(2)}</p>
@@ -169,6 +198,15 @@ export const WinnerManagement = ({
                   <span className="text-muted-foreground">Total Winners:</span>
                   <p className="font-semibold">{winners.length}</p>
                 </div>
+                <div>
+                  <span className="text-muted-foreground">Selection Method:</span>
+                  <p className="font-semibold text-primary">Random Draw</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t">
+                <p className="text-xs text-muted-foreground">
+                  ✨ Winners selected fairly using random selection from all boosted comments
+                </p>
               </div>
             </div>
           </div>

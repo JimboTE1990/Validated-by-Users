@@ -19,6 +19,8 @@ interface WinnerManagementResult {
   failedPayouts?: any[];
   message: string;
   error?: string;
+  extended?: boolean;
+  newEndDate?: string;
 }
 
 export const useWinnerManagement = () => {

@@ -387,9 +387,13 @@ export type Database = {
           current_entries: number | null
           description: string
           end_date: string
+          extension_count: number | null
+          extension_reason: string | null
           full_description: string | null
           id: string
           max_entries: number | null
+          min_entries_threshold: number | null
+          original_end_date: string | null
           prize_pool: number
           product_link: string | null
           start_date: string | null
@@ -406,9 +410,13 @@ export type Database = {
           current_entries?: number | null
           description: string
           end_date: string
+          extension_count?: number | null
+          extension_reason?: string | null
           full_description?: string | null
           id?: string
           max_entries?: number | null
+          min_entries_threshold?: number | null
+          original_end_date?: string | null
           prize_pool: number
           product_link?: string | null
           start_date?: string | null
@@ -425,9 +433,13 @@ export type Database = {
           current_entries?: number | null
           description?: string
           end_date?: string
+          extension_count?: number | null
+          extension_reason?: string | null
           full_description?: string | null
           id?: string
           max_entries?: number | null
+          min_entries_threshold?: number | null
+          original_end_date?: string | null
           prize_pool?: number
           product_link?: string | null
           start_date?: string | null

@@ -321,10 +321,11 @@ const CreatePost = () => {
                 <SelectItem value="100">£100</SelectItem>
                 <SelectItem value="250">£250</SelectItem>
                 <SelectItem value="500">£500</SelectItem>
+                <SelectItem value="1000">£1000</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              A 15% admin fee will be added at checkout.
+              A 15% admin fee will be added at checkout. Higher prize pools require more entries for winner selection.
             </p>
           </div>
 
