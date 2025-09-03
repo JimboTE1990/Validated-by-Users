@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import { MediaUpload } from "@/components/MediaUpload";
-import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown } from "lucide-react";
+import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useStatistics } from "@/hooks/useStatistics";
@@ -267,6 +267,226 @@ const Home = () => {
                 stepTitle="Step 3: Everyone Wins"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Real Use Case Examples */}
+      <section className="py-16 bg-muted/20">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h3 className="text-2xl font-bold text-foreground mb-4">
+              See How Others Use It
+            </h3>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Real founders sharing their experiences and results
+            </p>
+          </div>
+
+          {/* Example Stories */}
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Lightbulb className="h-5 w-5 text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-foreground">John</h4>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Wanted to A/B test 2 product variations. Listed for £10 due to low effort required.
+                </p>
+                <Badge variant="secondary" className="text-xs">A/B Testing</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-success" />
+                  </div>
+                  <h4 className="font-semibold text-foreground">Tim</h4>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Needed feedback on his landing page copy and how enticing the offer was. Listed for £25.
+                </p>
+                <Badge variant="secondary" className="text-xs">Copy Review</Badge>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Globe className="h-5 w-5 text-accent" />
+                  </div>
+                  <h4 className="font-semibold text-foreground">Kerry</h4>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Requested a full E2E review of her small business site, focusing on Services & Pricing pages. Listed for £250.
+                </p>
+                <Badge variant="secondary" className="text-xs">Full Site Review</Badge>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left py-3 font-semibold text-foreground">Name</th>
+                        <th className="text-left py-3 font-semibold text-foreground">Ask</th>
+                        <th className="text-left py-3 font-semibold text-foreground">Prize Pool</th>
+                        <th className="text-left py-3 font-semibold text-foreground">Effort Level</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border/30">
+                        <td className="py-3 font-medium text-foreground">John</td>
+                        <td className="py-3 text-muted-foreground">A/B test 2 variations</td>
+                        <td className="py-3 text-primary font-medium">£10</td>
+                        <td className="py-3 text-muted-foreground">Low</td>
+                      </tr>
+                      <tr className="border-b border-border/30">
+                        <td className="py-3 font-medium text-foreground">Tim</td>
+                        <td className="py-3 text-muted-foreground">Landing page copy feedback</td>
+                        <td className="py-3 text-success font-medium">£25</td>
+                        <td className="py-3 text-muted-foreground">Medium</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 font-medium text-foreground">Kerry</td>
+                        <td className="py-3 text-muted-foreground">Full E2E site review</td>
+                        <td className="py-3 text-accent font-medium">£250</td>
+                        <td className="py-3 text-muted-foreground">High</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Best Practices Guide */}
+      <section className="py-16 bg-background">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h3 className="text-2xl font-bold text-foreground mb-4">
+              Best Practices
+            </h3>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Tips to get the most out of our validation ecosystem
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* For Requestors */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Rocket className="h-6 w-6 text-primary" />
+                  </div>
+                  <h4 className="text-xl font-semibold text-foreground">For Requestors</h4>
+                  <Badge variant="secondary" className="text-xs">🚀 Founders & Creators</Badge>
+                </div>
+                
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Be specific in your ask</span>
+                      <p className="text-sm text-muted-foreground mt-1">Clear questions get better answers</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Match prize pool to effort</span>
+                      <p className="text-sm text-muted-foreground mt-1">Higher rewards for complex reviews</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Keep it concise</span>
+                      <p className="text-sm text-muted-foreground mt-1">Focused requests get more engagement</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Boost quality comments</span>
+                      <p className="text-sm text-muted-foreground mt-1">Reward detailed feedback with extra entries</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Close the loop with participants</span>
+                      <p className="text-sm text-muted-foreground mt-1">Share how you implemented their feedback</p>
+                    </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* For Feedback Givers */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-accent" />
+                  </div>
+                  <h4 className="text-xl font-semibold text-foreground">For Feedback Givers</h4>
+                  <Badge variant="secondary" className="text-xs">💡 Community</Badge>
+                </div>
+                
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Be constructive (explain why)</span>
+                      <p className="text-sm text-muted-foreground mt-1">Share reasoning behind your feedback</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Stick to the brief</span>
+                      <p className="text-sm text-muted-foreground mt-1">Answer what the founder actually asked</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Think like the target audience</span>
+                      <p className="text-sm text-muted-foreground mt-1">Consider who would actually use this product</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Quality feedback increases win chances</span>
+                      <p className="text-sm text-muted-foreground mt-1">Detailed reviews get boosted by founders</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-foreground">Stay respectful & professional</span>
+                      <p className="text-sm text-muted-foreground mt-1">Help founders improve, don't just criticize</p>
+                    </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
