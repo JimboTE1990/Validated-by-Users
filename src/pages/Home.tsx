@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import { MediaUpload } from "@/components/MediaUpload";
-import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, ChevronUp, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle } from "lucide-react";
+import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, ChevronUp, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useStatistics } from "@/hooks/useStatistics";
@@ -216,7 +216,7 @@ const Home = () => {
                       </ul>
                       <Link to="/feed">
                         <Button variant="default" size="sm" className="w-full">
-                          <Trophy className="h-4 w-4" />
+                          <Search className="h-4 w-4" />
                           Explore Prize Pools
                           <ArrowRight className="h-3 w-3" />
                         </Button>
