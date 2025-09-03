@@ -46,7 +46,7 @@ const Home = () => {
               Everyone wins in this rewarding ecosystem of growth and discovery.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to="/feed">
                 <Button variant="hero" size="xl" className="min-w-[200px]">
                   <Trophy className="h-5 w-5" />
@@ -62,6 +62,28 @@ const Home = () => {
               </Link>
             </div>
             
+            {/* Quick Navigation CTAs */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Zap className="h-4 w-4" />
+                How It Works
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                onClick={() => document.getElementById('best-practices')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Star className="h-4 w-4" />
+                Best Practices
+              </Button>
+            </div>
+            
             <div className="relative mx-auto max-w-4xl">
               <img 
                 src={heroImage} 
@@ -75,7 +97,7 @@ const Home = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-24 bg-muted/30">
+      <section id="how-it-works" className="py-24 bg-muted/30">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-4">
@@ -374,7 +396,7 @@ const Home = () => {
       </section>
 
       {/* Best Practices Guide */}
-      <section className="py-16 bg-background">
+      <section id="best-practices" className="py-16 bg-background">
         <div className="container">
           <div className="text-center mb-12">
             <h3 className="text-2xl font-bold text-foreground mb-4">
