@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
 import { MediaUpload } from "@/components/MediaUpload";
-import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle } from "lucide-react";
+import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, ChevronUp, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useStatistics } from "@/hooks/useStatistics";
@@ -13,12 +13,8 @@ const Home = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const { stats, loading } = useStatistics();
 
-  const scrollToStep = (stepNumber: number) => {
+  const toggleStep = (stepNumber: number) => {
     setActiveStep(activeStep === stepNumber ? null : stepNumber);
-    const element = document.getElementById(`step-${stepNumber}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   return (
@@ -109,186 +105,188 @@ const Home = () => {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <Card 
-              className="border-0 bg-gradient-card shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:bg-gradient-card/80"
-              onClick={() => scrollToStep(1)}
-            >
-              <CardContent className="p-8 text-center">
-                <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Target className="h-8 w-8 text-primary" />
+            {/* Step 1 - Founders Post */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-8">
+                <div 
+                  className="text-center cursor-pointer"
+                  onClick={() => toggleStep(1)}
+                >
+                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Target className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                    1. Founders Post
+                    {activeStep === 1 ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Share your product, set a prize pool, and get ready for valuable feedback from real users.
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                  1. Founders Post
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </h3>
-                <p className="text-muted-foreground">
-                  Share your product, set a prize pool, and get ready for valuable feedback from real users.
-                </p>
+                
+                {activeStep === 1 && (
+                  <div className="mt-8 pt-6 border-t border-border/50">
+                    <div className="text-left">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Create your validation post in minutes. Share your product details, set your prize pool budget, 
+                        and let our community help you improve.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          Describe your product or startup concept
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          Set your prize pool (£10 - £1000)
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          Choose your validation timeline
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          Go live and start receiving feedback
+                        </li>
+                      </ul>
+                      <Link to="/create-post">
+                        <Button variant="default" size="sm" className="w-full">
+                          <Users className="h-4 w-4" />
+                          Request User Feedback
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
-            <Card 
-              className="border-0 bg-gradient-card shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:bg-gradient-card/80"
-              onClick={() => scrollToStep(2)}
-            >
-              <CardContent className="p-8 text-center">
-                <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
-                  <MessageCircle className="h-8 w-8 text-success" />
+            {/* Step 2 - Users Validate */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-8">
+                <div 
+                  className="text-center cursor-pointer"
+                  onClick={() => toggleStep(2)}
+                >
+                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
+                    <MessageCircle className="h-8 w-8 text-success" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                    2. Users Validate
+                    {activeStep === 2 ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Leave thoughtful feedback and automatically enter the prize draw. Better feedback = more entries.
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                  2. Users Validate
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </h3>
-                <p className="text-muted-foreground">
-                  Leave thoughtful feedback and automatically enter the prize draw. Better feedback = more entries.
-                </p>
+                
+                {activeStep === 2 && (
+                  <div className="mt-8 pt-6 border-t border-border/50">
+                    <div className="text-left">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Users browse active prize pools, provide thoughtful feedback, and automatically 
+                        enter the draw. Quality feedback gets boosted by founders for extra entries.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
+                          Browse products seeking validation
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
+                          Leave detailed, constructive feedback
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
+                          Get automatic entry into prize draw
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
+                          Earn bonus entries for boosted comments
+                        </li>
+                      </ul>
+                      <Link to="/feed">
+                        <Button variant="default" size="sm" className="w-full">
+                          <Trophy className="h-4 w-4" />
+                          Explore Prize Pools
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
             
-            <Card 
-              className="border-0 bg-gradient-card shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:bg-gradient-card/80"
-              onClick={() => scrollToStep(3)}
-            >
-              <CardContent className="p-8 text-center">
-                <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Trophy className="h-8 w-8 text-accent" />
+            {/* Step 3 - Everyone Wins */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-8">
+                <div 
+                  className="text-center cursor-pointer"
+                  onClick={() => toggleStep(3)}
+                >
+                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Trophy className="h-8 w-8 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
+                    3. Everyone Wins
+                    {activeStep === 3 ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Winners get rewarded, founders get validation, and great products get built.
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                  3. Everyone Wins
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                </h3>
-                <p className="text-muted-foreground">
-                  Winners get rewarded, founders get validation, and great products get built.
-                </p>
+                
+                {activeStep === 3 && (
+                  <div className="mt-8 pt-6 border-t border-border/50">
+                    <div className="text-left">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        When the validation period ends, winners are drawn fairly and transparently. 
+                        Founders get valuable insights, users get rewarded, and great products get built.
+                      </p>
+                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          Transparent, automated prize draws
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          Winners receive instant notifications
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          Founders get comprehensive feedback reports
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
+                          Community builds better products together
+                        </li>
+                      </ul>
+                      <Link to="/dashboard">
+                        <Button variant="default" size="sm" className="w-full">
+                          <Trophy className="h-4 w-4" />
+                          View Dashboard
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Step Sections */}
-      <section className="py-16 bg-background">
-        <div className="container">
-          {/* Step 1 Details */}
-          <div id="step-1" className={`mb-16 transition-all duration-500 ${activeStep === 1 ? 'opacity-100' : 'opacity-60'}`}>
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Target className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-foreground">Step 1: Founders Post</h3>
-                </div>
-                <p className="text-lg text-muted-foreground mb-6">
-                  Create your validation post in minutes. Share your product details, set your prize pool budget, 
-                  and let our community help you improve.
-                </p>
-                <ul className="space-y-3 text-muted-foreground">
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                    Describe your product or startup concept
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                    Set your prize pool (£10 - £500)
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                    Choose your validation timeline
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                    Go live and start receiving feedback
-                  </li>
-                </ul>
-              </div>
-              <MediaUpload
-                stepNumber={1}
-                stepTitle="Step 1: Founders Post"
-              />
-            </div>
-          </div>
-
-          {/* Step 2 Details */}
-          <div id="step-2" className={`mb-16 transition-all duration-500 ${activeStep === 2 ? 'opacity-100' : 'opacity-60'}`}>
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div className="order-2 lg:order-1">
-                <MediaUpload
-                  stepNumber={2}
-                  stepTitle="Step 2: Users Validate"
-                />
-              </div>
-              <div className="order-1 lg:order-2">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-full bg-success/10 flex items-center justify-center">
-                    <MessageCircle className="h-6 w-6 text-success" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-foreground">Step 2: Users Validate</h3>
-                </div>
-                <p className="text-lg text-muted-foreground mb-6">
-                  Users browse active prize pools, provide thoughtful feedback, and automatically 
-                  enter the draw. Quality feedback gets boosted by founders for extra entries.
-                </p>
-                <ul className="space-y-3 text-muted-foreground">
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-success" />
-                    Browse products seeking validation
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-success" />
-                    Leave detailed, constructive feedback
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-success" />
-                    Get automatic entry into prize draw
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-success" />
-                    Earn bonus entries for boosted comments
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 3 Details */}
-          <div id="step-3" className={`mb-16 transition-all duration-500 ${activeStep === 3 ? 'opacity-100' : 'opacity-60'}`}>
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Trophy className="h-6 w-6 text-accent" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-foreground">Step 3: Everyone Wins</h3>
-                </div>
-                <p className="text-lg text-muted-foreground mb-6">
-                  When the validation period ends, winners are drawn fairly and transparently. 
-                  Founders get valuable insights, users get rewarded, and great products get built.
-                </p>
-                <ul className="space-y-3 text-muted-foreground">
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-accent" />
-                    Transparent, automated prize draws
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-accent" />
-                    Winners receive instant notifications
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-accent" />
-                    Founders get comprehensive feedback reports
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <div className="h-2 w-2 rounded-full bg-accent" />
-                    Community builds better products together
-                  </li>
-                </ul>
-              </div>
-              <MediaUpload
-                stepNumber={3}
-                stepTitle="Step 3: Everyone Wins"
-              />
-            </div>
           </div>
         </div>
       </section>
