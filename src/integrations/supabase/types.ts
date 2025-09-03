@@ -118,7 +118,7 @@ export type Database = {
           report_status: string | null
           reported_at: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           content: string
@@ -133,7 +133,7 @@ export type Database = {
           report_status?: string | null
           reported_at?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           content?: string
@@ -148,7 +148,7 @@ export type Database = {
           report_status?: string | null
           reported_at?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -308,7 +308,7 @@ export type Database = {
           status: string | null
           stripe_session_id: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           admin_fee?: number | null
@@ -321,7 +321,7 @@ export type Database = {
           status?: string | null
           stripe_session_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           admin_fee?: number | null
@@ -334,7 +334,7 @@ export type Database = {
           status?: string | null
           stripe_session_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -718,6 +718,10 @@ export type Database = {
         }
         Returns: string
       }
+      log_financial_access: {
+        Args: { p_operation: string; p_record_id: string; p_table_name: string }
+        Returns: undefined
+      }
       report_feedback_as_author: {
         Args: {
           p_comment_id: string
@@ -725,6 +729,10 @@ export type Database = {
           p_report_reason: string
         }
         Returns: Json
+      }
+      validate_financial_operation: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
       }
       verify_admin_access: {
         Args: { session_token?: string }
