@@ -328,8 +328,8 @@ const Feed = () => {
               timeLeft={getTimeLeft(post.end_date)}
               commentCount={post.current_entries}
               category={post.category.name}
-              authorName={`${post.author.first_name} ${post.author.last_name}`}
-              authorAvatar={post.author.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author.first_name}`}
+               authorName={`${post.author?.first_name || 'Anonymous'} ${post.author?.last_name || 'User'}`}
+               authorAvatar={post.author?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author?.first_name || 'anonymous'}`}
               authorId={post.author_id}
               userEntry={post.user_entry}
               onEnterDraw={enterDraw}
