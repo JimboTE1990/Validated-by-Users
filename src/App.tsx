@@ -21,6 +21,7 @@ import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import About from "./pages/About";
 import Help from "./pages/Help";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
