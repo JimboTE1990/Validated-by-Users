@@ -617,6 +617,21 @@ const Home = () => {
               </p>
             </div>
 
+            {/* Developer Tools */}
+            <div className="mb-8 p-4 bg-muted/50 rounded-lg border border-dashed">
+              <p className="text-sm text-muted-foreground mb-2">🔧 Developer Tools</p>
+              <Link 
+                to="/e2e-test" 
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <Target className="h-3 w-3" />
+                Run E2E Test Flow
+              </Link>
+              <p className="text-xs text-muted-foreground mt-1">
+                Test the complete developer → user → payout flow
+              </p>
+            </div>
+
             {/* Copyright */}
             <div className="text-sm text-muted-foreground">
               © 2025 Validated by Users. All rights reserved.
