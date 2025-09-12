@@ -107,8 +107,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         isValid: true,
         userId: adminVerification.user_id,
-        expiresAt: adminVerification.expires_at,
-        sessionToken: body.sessionToken
+        expiresAt: adminVerification.expires_at
+        // Note: sessionToken removed for security - never expose tokens in responses
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

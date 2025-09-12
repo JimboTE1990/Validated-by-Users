@@ -60,6 +60,7 @@ export type Database = {
           is_active: boolean
           last_activity: string
           session_token: string
+          session_token_hash: string | null
           user_agent: string | null
         }
         Insert: {
@@ -71,6 +72,7 @@ export type Database = {
           is_active?: boolean
           last_activity?: string
           session_token: string
+          session_token_hash?: string | null
           user_agent?: string | null
         }
         Update: {
@@ -82,6 +84,7 @@ export type Database = {
           is_active?: boolean
           last_activity?: string
           session_token?: string
+          session_token_hash?: string | null
           user_agent?: string | null
         }
         Relationships: []
@@ -671,12 +674,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_session_info: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          ip_address: unknown | null
+          is_active: boolean | null
+          last_activity: string | null
+          token_status: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          token_status?: never
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          ip_address?: unknown | null
+          is_active?: boolean | null
+          last_activity?: string | null
+          token_status?: never
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      cleanup_and_secure_admin_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_expired_admin_sessions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      create_admin_session: {
+        Args: {
+          p_admin_user_id: string
+          p_expires_at: string
+          p_ip_address?: string
+          p_session_token: string
+          p_user_agent?: string
+        }
+        Returns: string
       }
       get_comments_for_author: {
         Args: { p_post_id: string }
@@ -699,6 +751,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      hash_session_token: {
+        Args: { token_value: string }
+        Returns: string
       }
       increment_user_strike: {
         Args: { target_user_id: string }
@@ -741,6 +797,10 @@ export type Database = {
           is_valid: boolean
           user_id: string
         }[]
+      }
+      verify_session_token: {
+        Args: { token_hash: string; token_value: string }
+        Returns: boolean
       }
     }
     Enums: {
