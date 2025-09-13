@@ -5,6 +5,7 @@ export interface Profile {
   id: string;
   first_name?: string;
   last_name?: string;
+  date_of_birth?: string;
   avatar_url?: string;
   total_winnings: number;
   total_entries: number;

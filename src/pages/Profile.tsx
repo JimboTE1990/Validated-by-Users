@@ -9,12 +9,17 @@ import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   Trophy, 
   MessageCircle, 
   TrendingUp, 
   Award,
   Calendar,
+  CalendarIcon,
   ExternalLink,
   Star,
   History,
@@ -43,6 +48,7 @@ const Profile = () => {
   const [userInfo, setUserInfo] = useState({
     firstName: "",
     lastName: "",
+    dateOfBirth: null as Date | null,
     email: ""
   });
 
@@ -55,6 +61,7 @@ const Profile = () => {
       setUserInfo({
         firstName: profile.first_name || "",
         lastName: profile.last_name || "",
+        dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : null,
         email: user.email || ""
       });
     }
@@ -64,7 +71,8 @@ const Profile = () => {
     try {
       await updateProfile({
         first_name: userInfo.firstName,
-        last_name: userInfo.lastName
+        last_name: userInfo.lastName,
+        date_of_birth: userInfo.dateOfBirth?.toISOString().split('T')[0]
       });
       
       toast({
@@ -86,6 +94,7 @@ const Profile = () => {
       setUserInfo({
         firstName: profile.first_name || "",
         lastName: profile.last_name || "",
+        dateOfBirth: profile.date_of_birth ? new Date(profile.date_of_birth) : null,
         email: user?.email || ""
       });
     }
@@ -157,6 +166,39 @@ const Profile = () => {
                 </div>
               </div>
               <div>
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !userInfo.dateOfBirth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {userInfo.dateOfBirth ? (
+                        format(userInfo.dateOfBirth, "PPP")
+                      ) : (
+                        <span>Pick your date of birth</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={userInfo.dateOfBirth}
+                      onSelect={(date) => setUserInfo({...userInfo, dateOfBirth: date})}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -194,11 +236,17 @@ const Profile = () => {
                     year: 'numeric' 
                   })}
                 </Badge>
-                <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
-              </div>
+                 {userInfo.dateOfBirth && (
+                   <Badge variant="secondary" className="bg-accent/10 text-accent border-0">
+                     <CalendarIcon className="h-3 w-3 mr-1" />
+                     Born {format(userInfo.dateOfBirth, "MMM yyyy")}
+                   </Badge>
+                 )}
+                 <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                   <Edit className="h-4 w-4 mr-2" />
+                   Edit Profile
+                 </Button>
+               </div>
             </>
           )}
         </div>

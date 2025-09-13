@@ -4,15 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingScreen from "@/components/LoadingScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +47,7 @@ const Auth = () => {
   const [registerForm, setRegisterForm] = useState({ 
     firstName: "", 
     lastName: "",
+    dateOfBirth: null as Date | null,
     email: "", 
     password: "", 
     confirmPassword: "" 
@@ -107,6 +112,34 @@ const Auth = () => {
       return;
     }
 
+    // Age validation - user must be 16 or older
+    if (!registerForm.dateOfBirth) {
+      toast({
+        title: "Date of birth required",
+        description: "Please select your date of birth.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const today = new Date();
+    const birthDate = new Date(registerForm.dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 16) {
+      toast({
+        title: "Age requirement not met",
+        description: "You must be at least 16 years old to create an account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -137,6 +170,7 @@ const Auth = () => {
           data: {
             first_name: registerForm.firstName,
             last_name: registerForm.lastName,
+            date_of_birth: registerForm.dateOfBirth?.toISOString().split('T')[0],
           }
         }
       });
@@ -411,6 +445,39 @@ const Auth = () => {
                         required
                       />  
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-dob">Date of Birth</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !registerForm.dateOfBirth && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {registerForm.dateOfBirth ? (
+                            format(registerForm.dateOfBirth, "PPP")
+                          ) : (
+                            <span>Pick your date of birth</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={registerForm.dateOfBirth}
+                          onSelect={(date) => setRegisterForm({ ...registerForm, dateOfBirth: date })}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
