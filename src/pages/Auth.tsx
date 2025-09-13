@@ -474,6 +474,7 @@ const Auth = () => {
                             date > new Date() || date < new Date("1900-01-01")
                           }
                           initialFocus
+                          defaultMonth={new Date(2000, 0)} // Start at year 2000 for easier navigation
                           className={cn("p-3 pointer-events-auto")}
                         />
                       </PopoverContent>

@@ -4,6 +4,7 @@ import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
@@ -54,6 +55,70 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        Caption: (captionProps) => {
+          const { displayMonth } = captionProps;
+          const currentYear = displayMonth.getFullYear();
+          const currentMonth = displayMonth.getMonth();
+          
+          // Generate year options (from 1900 to current year + 10)
+          const currentYearNum = new Date().getFullYear();
+          const years = Array.from({ length: currentYearNum - 1900 + 11 }, (_, i) => 1900 + i);
+          
+          const months = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+          ];
+
+          const handleMonthChange = (newDate: Date) => {
+            // Access the month change handler from the DayPicker props
+            if (props.onMonthChange) {
+              props.onMonthChange(newDate);
+            }
+          };
+
+          return (
+            <div className="flex justify-center items-center space-x-2 mb-4">
+              <Select
+                value={months[currentMonth]}
+                onValueChange={(month) => {
+                  const monthIndex = months.indexOf(month);
+                  const newDate = new Date(currentYear, monthIndex, 1);
+                  handleMonthChange(newDate);
+                }}
+              >
+                <SelectTrigger className="w-[120px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50">
+                  {months.map((month) => (
+                    <SelectItem key={month} value={month}>
+                      {month}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={currentYear.toString()}
+                onValueChange={(year) => {
+                  const newDate = new Date(parseInt(year), currentMonth, 1);
+                  handleMonthChange(newDate);
+                }}
+              >
+                <SelectTrigger className="w-[80px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-background border z-50 max-h-[200px]">
+                  {years.reverse().map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          );
+        },
       }}
       {...props}
     />
