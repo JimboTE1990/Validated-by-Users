@@ -1,90 +1,156 @@
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Header from "@/components/Header";
-import { MediaUpload } from "@/components/MediaUpload";
-import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, ChevronUp, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle, Search } from "lucide-react";
+import { CheckCircle, Trophy, Users, Target, MessageSquare, DollarSign, ArrowRight, Star, Gift, Zap, Shield, Mail, Clock, Bell, Rocket, Award, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { useStatistics } from "@/hooks/useStatistics";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-image.jpg";
 
 const Home = () => {
-  const [activeStep, setActiveStep] = useState<number | null>(null);
-  const { stats, loading } = useStatistics();
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const toggleStep = (stepNumber: number) => {
-    setActiveStep(activeStep === stepNumber ? null : stepNumber);
+  const handleWaitlistSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !name) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both your name and email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('waitlist-signup', {
+        body: {
+          email,
+          name,
+          referralSource: 'landing_page',
+          utmSource: new URLSearchParams(window.location.search).get('utm_source'),
+          utmMedium: new URLSearchParams(window.location.search).get('utm_medium'),
+          utmCampaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+          utmContent: new URLSearchParams(window.location.search).get('utm_content'),
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "You're on the list!",
+        description: "Thanks for joining! We'll notify you when we launch early access.",
+      });
+      
+      setEmail("");
+      setName("");
+    } catch (error: any) {
+      console.error('Waitlist signup error:', error);
+      toast({
+        title: "Something went wrong",
+        description: error.message || "Please try again or contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5" />
         <div className="container relative z-10 py-24 text-center">
           <div className="mx-auto max-w-4xl">
             <Badge variant="secondary" className="mb-6 bg-primary/10 text-primary border-0">
-              🎯 Validate • Get Rewarded • Grow Together
+              🚀 Coming Soon • Join the Waitlist
             </Badge>
             
             <h1 className="text-5xl font-bold tracking-tight text-foreground mb-6">
-              Get Your Product{" "}
+              Validate Ideas,{" "}
               <span className="bg-gradient-hero bg-clip-text text-transparent">
-                Validated by Users
+                Win Prizes
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Founders create prize pools for feedback. Users get rewarded for validation. 
-              Everyone wins in this rewarding ecosystem of growth and discovery.
+            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
+              Join thousands of founders and users who get rewarded for building better products together.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link to="/feed">
-                <Button variant="hero" size="xl" className="min-w-[200px]">
-                  <Trophy className="h-5 w-5" />
-                  Explore Prize Pools
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/create-post">
-                <Button variant="outline" size="xl" className="min-w-[200px]">
-                  <Users className="h-5 w-5" />
-                  Request User Feedback
-                </Button>
-              </Link>
-            </div>
+            {/* Email Capture Form */}
+            <Card className="max-w-md mx-auto mb-12 border-0 bg-gradient-card shadow-lg">
+              <CardContent className="p-6">
+                <form onSubmit={handleWaitlistSignup} className="space-y-4">
+                  <div className="text-left">
+                    <label htmlFor="name" className="text-sm font-medium text-foreground mb-2 block">
+                      Name
+                    </label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="text-left">
+                    <label htmlFor="email" className="text-sm font-medium text-foreground mb-2 block">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    variant="hero" 
+                    size="lg" 
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Clock className="h-4 w-4 animate-spin" />
+                        Joining...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4" />
+                        Join the Waitlist
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+                
+                <p className="text-xs text-muted-foreground mt-4 text-center">
+                  Get early access and exclusive updates. No spam, ever.
+                </p>
+              </CardContent>
+            </Card>
             
-            {/* Quick Navigation CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Zap className="h-4 w-4" />
-                How It Works
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="lg" 
-                onClick={() => document.getElementById('best-practices')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Star className="h-4 w-4" />
-                Best Practices
-              </Button>
-            </div>
-            
-            <div className="relative mx-auto max-w-4xl">
+            <div className="relative mx-auto max-w-3xl">
               <img 
                 src={heroImage} 
-                alt="Founders collaborating and getting validated" 
+                alt="Validate Ideas, Win Prizes - Product validation platform preview" 
                 className="rounded-xl shadow-2xl border border-border/50"
               />
               <div className="absolute inset-0 rounded-xl bg-gradient-hero opacity-10" />
@@ -93,549 +159,307 @@ const Home = () => {
         </div>
       </section>
       
-      {/* Features Section */}
-      <section id="how-it-works" className="py-24 bg-muted/30">
+      {/* Value Propositions */}
+      <section className="py-24 bg-muted/30">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Why Join the Waitlist?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Be among the first to experience the future of product validation
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Value Prop 1 */}
+            <Card className="border-0 bg-gradient-card shadow-sm text-center">
+              <CardContent className="p-6">
+                <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Trophy className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Win Real Prizes</h3>
+                <p className="text-sm text-muted-foreground">
+                  Get rewarded for providing valuable feedback to founders
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Value Prop 2 */}
+            <Card className="border-0 bg-gradient-card shadow-sm text-center">
+              <CardContent className="p-6">
+                <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-success/10 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-success" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Validate Fast</h3>
+                <p className="text-sm text-muted-foreground">
+                  Get your product ideas validated by real users quickly
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Value Prop 3 */}
+            <Card className="border-0 bg-gradient-card shadow-sm text-center">
+              <CardContent className="p-6">
+                <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-accent/10 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-accent" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Build Together</h3>
+                <p className="text-sm text-muted-foreground">
+                  Join a community of founders and users helping each other succeed
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Value Prop 4 */}
+            <Card className="border-0 bg-gradient-card shadow-sm text-center">
+              <CardContent className="p-6">
+                <div className="h-12 w-12 mx-auto mb-4 rounded-full bg-warning/10 flex items-center justify-center">
+                  <Rocket className="h-6 w-6 text-warning" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Early Access</h3>
+                <p className="text-sm text-muted-foreground">
+                  Be first to access new features and exclusive opportunities
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works - Pre-Launch */}
+      <section className="py-24">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-4">
               How It Works
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A simple, rewarding process that benefits everyone in the ecosystem
+              Simple steps to get started when we launch
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Step 1 - Founders Post */}
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-8">
-                <div 
-                  className="text-center cursor-pointer"
-                  onClick={() => toggleStep(1)}
-                >
-                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Target className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                    1. Founders Post
-                    {activeStep === 1 ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Share your product, set a prize pool, and get ready for valuable feedback from real users.
-                  </p>
-                </div>
-                
-                {activeStep === 1 && (
-                  <div className="mt-8 pt-6 border-t border-border/50">
-                    <div className="text-left">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Create your validation post in minutes. Share your product details, set your prize pool budget, 
-                        and let our community help you improve.
-                      </p>
-                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          Describe your product or startup concept
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          Set your prize pool (£10 - £1000)
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          Choose your validation timeline
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          Go live and start receiving feedback
-                        </li>
-                      </ul>
-                      <Link to="/create-post">
-                        <Button variant="default" size="sm" className="w-full">
-                          <Users className="h-4 w-4" />
-                          Request User Feedback
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {/* Step 1 */}
+            <div className="text-center">
+              <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                1. Join the Waitlist
+              </h3>
+              <p className="text-muted-foreground">
+                Sign up now to secure your spot and get notified when we launch early access.
+              </p>
+            </div>
             
-            {/* Step 2 - Users Validate */}
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-8">
-                <div 
-                  className="text-center cursor-pointer"
-                  onClick={() => toggleStep(2)}
-                >
-                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
-                    <MessageCircle className="h-8 w-8 text-success" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                    2. Users Validate
-                    {activeStep === 2 ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Leave thoughtful feedback and automatically enter the prize draw. Better feedback = more entries.
-                  </p>
-                </div>
-                
-                {activeStep === 2 && (
-                  <div className="mt-8 pt-6 border-t border-border/50">
-                    <div className="text-left">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Users browse active prize pools, provide thoughtful feedback, and automatically 
-                        enter the draw. Quality feedback gets boosted by founders for extra entries.
-                      </p>
-                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                          Browse products seeking validation
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                          Leave detailed, constructive feedback
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                          Get automatic entry into prize draw
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-success" />
-                          Earn bonus entries for boosted comments
-                        </li>
-                      </ul>
-                      <Link to="/feed">
-                        <Button variant="default" size="sm" className="w-full">
-                          <Search className="h-4 w-4" />
-                          Explore Prize Pools
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Step 2 */}
+            <div className="text-center">
+              <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
+                <Mail className="h-8 w-8 text-success" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                2. Get Updates
+              </h3>
+              <p className="text-muted-foreground">
+                Receive exclusive updates, beta invites, and behind-the-scenes content.
+              </p>
+            </div>
             
-            {/* Step 3 - Everyone Wins */}
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-8">
-                <div 
-                  className="text-center cursor-pointer"
-                  onClick={() => toggleStep(3)}
-                >
-                  <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Trophy className="h-8 w-8 text-accent" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center justify-center gap-2">
-                    3. Everyone Wins
-                    {activeStep === 3 ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Winners get rewarded, founders get validation, and great products get built.
-                  </p>
-                </div>
-                
-                {activeStep === 3 && (
-                  <div className="mt-8 pt-6 border-t border-border/50">
-                    <div className="text-left">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        When the validation period ends, winners are drawn fairly and transparently. 
-                        Founders get valuable insights, users get rewarded, and great products get built.
-                      </p>
-                      <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          Transparent, automated prize draws
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          Winners receive instant notifications
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          Founders get comprehensive feedback reports
-                        </li>
-                        <li className="flex items-center gap-3">
-                          <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-                          Community builds better products together
-                        </li>
-                      </ul>
-                      <Link to="/dashboard">
-                        <Button variant="default" size="sm" className="w-full">
-                          <Trophy className="h-4 w-4" />
-                          View Dashboard
-                          <ArrowRight className="h-3 w-3" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Step 3 */}
+            <div className="text-center">
+              <div className="h-16 w-16 mx-auto mb-6 rounded-full bg-accent/10 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                3. Early Access
+              </h3>
+              <p className="text-muted-foreground">
+                Be among the first to validate ideas, win prizes, and shape the platform.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Real Use Case Examples */}
-      <section className="py-16 bg-muted/20">
+      {/* Social Proof */}
+      <section className="py-24 bg-muted/30">
         <div className="container">
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              See How Others Use It
-            </h3>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Building in Public
+            </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Real founders sharing their experiences and results
+              Follow our journey as we build the future of product validation
             </p>
           </div>
-
-          {/* Example Stories */}
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {/* Testimonial Placeholder 1 */}
             <Card className="border-0 bg-gradient-card shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Lightbulb className="h-5 w-5 text-primary" />
-                  </div>
-                  <h4 className="font-semibold text-foreground">John</h4>
+                <div className="flex items-center gap-2 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                  ))}
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Wanted to A/B test 2 product variations. Listed for £10 due to low effort required.
+                <p className="text-sm text-muted-foreground mb-4">
+                  "Finally, a platform that makes product validation rewarding for everyone. Can't wait for the launch!"
                 </p>
-                <Badge variant="secondary" className="text-xs">A/B Testing</Badge>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-success" />
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-semibold text-primary">SA</span>
                   </div>
-                  <h4 className="font-semibold text-foreground">Tim</h4>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Needed feedback on his landing page copy and how enticing the offer was. Listed for £25.
-                </p>
-                <Badge variant="secondary" className="text-xs">Copy Review</Badge>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Globe className="h-5 w-5 text-accent" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Sarah A.</p>
+                    <p className="text-xs text-muted-foreground">Startup Founder</p>
                   </div>
-                  <h4 className="font-semibold text-foreground">Kerry</h4>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Requested a full E2E review of her small business site, focusing on Services & Pricing pages. Listed for £250.
-                </p>
-                <Badge variant="secondary" className="text-xs">Full Site Review</Badge>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Comparison Table */}
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-0 bg-gradient-card shadow-sm">
-              <CardContent className="p-6">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="text-left py-3 font-semibold text-foreground">Name</th>
-                        <th className="text-left py-3 font-semibold text-foreground">Ask</th>
-                        <th className="text-left py-3 font-semibold text-foreground">Prize Pool</th>
-                        <th className="text-left py-3 font-semibold text-foreground">Effort Level</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b border-border/30">
-                        <td className="py-3 font-medium text-foreground">John</td>
-                        <td className="py-3 text-muted-foreground">A/B test 2 variations</td>
-                        <td className="py-3 text-primary font-medium">£10</td>
-                        <td className="py-3 text-muted-foreground">Low</td>
-                      </tr>
-                      <tr className="border-b border-border/30">
-                        <td className="py-3 font-medium text-foreground">Tim</td>
-                        <td className="py-3 text-muted-foreground">Landing page copy feedback</td>
-                        <td className="py-3 text-success font-medium">£25</td>
-                        <td className="py-3 text-muted-foreground">Medium</td>
-                      </tr>
-                      <tr>
-                        <td className="py-3 font-medium text-foreground">Kerry</td>
-                        <td className="py-3 text-muted-foreground">Full E2E site review</td>
-                        <td className="py-3 text-accent font-medium">£250</td>
-                        <td className="py-3 text-muted-foreground">High</td>
-                      </tr>
-                    </tbody>
-                  </table>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Best Practices Guide */}
-      <section id="best-practices" className="py-16 bg-background">
-        <div className="container">
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold text-foreground mb-4">
-              Best Practices
-            </h3>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Tips to get the most out of our validation ecosystem
-            </p>
-          </div>
-
-          <Tabs defaultValue="requestors" className="max-w-4xl mx-auto">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="requestors" className="flex items-center gap-2">
-                <Rocket className="h-4 w-4" />
-                For Requestors
-              </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                For Users
-              </TabsTrigger>
-            </TabsList>
             
-            <TabsContent value="requestors">
-              <Card className="border-0 bg-gradient-card shadow-sm">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Rocket className="h-6 w-6 text-primary" />
-                    </div>
-                    <h4 className="text-xl font-semibold text-foreground">For Requestors</h4>
-                    <Badge variant="secondary" className="text-xs">🚀 Founders & Creators</Badge>
+            {/* Building Update */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <Badge variant="secondary" className="mb-3 bg-success/10 text-success border-0">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Progress Update
+                </Badge>
+                <h4 className="font-semibold text-foreground mb-2">Platform Development</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Core features are coming together beautifully. Prize distribution system tested and ready.
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div className="bg-success h-2 rounded-full" style={{ width: '75%' }}></div>
                   </div>
-                  
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Be specific in your ask</span>
-                        <p className="text-sm text-muted-foreground mt-1">Clear questions get better answers</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Match prize pool to effort</span>
-                        <p className="text-sm text-muted-foreground mt-1">Higher rewards for complex reviews</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Keep it concise</span>
-                        <p className="text-sm text-muted-foreground mt-1">Focused requests get more engagement</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Boost quality comments</span>
-                        <p className="text-sm text-muted-foreground mt-1">Reward detailed feedback with extra entries</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Close the loop with participants</span>
-                        <p className="text-sm text-muted-foreground mt-1">Share how you implemented their feedback</p>
-                      </div>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="users">
-              <Card className="border-0 bg-gradient-card shadow-sm">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-                      <Users className="h-6 w-6 text-accent" />
-                    </div>
-                    <h4 className="text-xl font-semibold text-foreground">For Feedback Givers</h4>
-                    <Badge variant="secondary" className="text-xs">💡 Community</Badge>
-                  </div>
-                  
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Be constructive (explain why)</span>
-                        <p className="text-sm text-muted-foreground mt-1">Share reasoning behind your feedback</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Stick to the brief</span>
-                        <p className="text-sm text-muted-foreground mt-1">Answer what the founder actually asked</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Think like the target audience</span>
-                        <p className="text-sm text-muted-foreground mt-1">Consider who would actually use this product</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Quality feedback increases win chances</span>
-                        <p className="text-sm text-muted-foreground mt-1">Detailed reviews get boosted by founders</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-medium text-foreground">Stay respectful & professional</span>
-                        <p className="text-sm text-muted-foreground mt-1">Help founders improve, don't just criticize</p>
-                      </div>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
-      
-      {/* Stats Section */}
-      <section className="py-16 bg-background">
-        <div className="container">
-          <div className={`grid gap-8 text-center ${stats.monthlyActiveUsers ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
-            <div>
-              <div className="text-3xl font-bold text-primary mb-2">
-                {loading ? '...' : `£${(stats.totalPrizePools / 1000).toFixed(0)}k${stats.totalPrizePools >= 1000 ? '+' : ''}`}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Prize Pools</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-success mb-2">
-                {loading ? '...' : `${stats.productsValidated.toLocaleString()}${stats.productsValidated >= 1000 ? '+' : ''}`}
-              </div>
-              <div className="text-sm text-muted-foreground">Products Validated</div>
-            </div>
-            {stats.monthlyActiveUsers && (
-              <div>
-                <div className="text-3xl font-bold text-accent mb-2">
-                  {loading ? '...' : `${(stats.monthlyActiveUsers / 1000).toFixed(0)}k+`}
+                  <span className="text-xs text-muted-foreground">75%</span>
                 </div>
-                <div className="text-sm text-muted-foreground">Monthly Active Users</div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+            
+            {/* Testimonial Placeholder 2 */}
+            <Card className="border-0 bg-gradient-card shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-warning text-warning" />
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  "Love the concept! Getting paid for feedback while helping founders succeed is genius."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center">
+                    <span className="text-xs font-semibold text-accent">MK</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Mike K.</p>
+                    <p className="text-xs text-muted-foreground">Product Designer</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
-      
-      {/* CTA Footer */}
-      <section className="py-24 bg-gradient-hero">
+
+      {/* Trust & Security */}
+      <section className="py-16">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-center">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-success" />
+              <span className="text-sm text-muted-foreground">Secure & Transparent</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-success" />
+              <span className="text-sm text-muted-foreground">No Spam, Ever</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-success" />
+              <span className="text-sm text-muted-foreground">Fair Prize Distribution</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-success" />
+              <span className="text-sm text-muted-foreground">Growing Community</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 bg-gradient-hero/5">
         <div className="container text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Get Validated?
-          </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-            Join thousands of founders and users in the most rewarding validation platform
-          </p>
-          <Link to="/feed">
-            <Button variant="accent" size="xl" className="min-w-[200px]">
-              <Star className="h-5 w-5" />
-              Start Exploring
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Ready to Get Started?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Join the waitlist now and be among the first to validate ideas and win prizes.
+            </p>
+            
+            <Button 
+              variant="hero" 
+              size="xl" 
+              onClick={() => document.querySelector('#email')?.scrollIntoView({ behavior: 'smooth' })}
+              className="min-w-[200px]"
+            >
+              <Rocket className="h-5 w-5" />
+              Join the Waitlist Now
+              <ArrowRight className="h-4 w-4" />
             </Button>
-          </Link>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-muted/30 py-16">
+      <footer className="py-16 bg-muted/50">
         <div className="container">
-          <div className="text-center">
-            {/* Logo */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                  <Trophy className="h-5 w-5 text-white" />
-                </div>
-                <span className="text-xl font-bold text-foreground">VALIDATED BY USERS</span>
-              </div>
-            </div>
-
-            {/* Navigation Links */}
-            <div className="flex flex-wrap justify-center gap-8 mb-8 text-sm">
-              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                Contact
-              </Link>
-              <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                Privacy Policy
-              </Link>
-              <Link to="/terms-conditions" className="text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Use
-              </Link>
-              <Link to="/about" className="text-muted-foreground hover:text-foreground transition-colors">
-                About
-              </Link>
-              <Link to="/help" className="text-muted-foreground hover:text-foreground transition-colors">
-                Help Center
-              </Link>
-            </div>
-
-            {/* Contact Information */}
-            <div className="mb-8">
-              <p className="text-muted-foreground">
-                Need help? Email us at{" "}
-                <a 
-                  href="mailto:support@validatedbyusers.com" 
-                  className="text-primary hover:underline"
-                >
-                  support@validatedbyusers.com
-                </a>
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Validate & Win</h3>
+              <p className="text-sm text-muted-foreground">
+                The platform where founders get validation and users get rewarded.
               </p>
             </div>
-
-            {/* Developer Tools */}
-            <div className="mb-8 p-4 bg-muted/50 rounded-lg border border-dashed">
-              <p className="text-sm text-muted-foreground mb-2">🔧 Developer Tools</p>
-              <Link 
-                to="/e2e-test" 
-                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-              >
-                <Target className="h-3 w-3" />
-                Run E2E Test Flow
-              </Link>
-              <p className="text-xs text-muted-foreground mt-1">
-                Test the complete developer → user → payout flow
+            
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Coming Soon</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>Product Validation</li>
+                <li>Prize Pools</li>
+                <li>Community Feedback</li>
+                <li>Instant Rewards</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact Us</Link></li>
+                <li><Link to="/help" className="hover:text-foreground transition-colors">Help Center</Link></li>
+                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms-conditions" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Stay Updated</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Get the latest updates on our development progress.
               </p>
+              <Button variant="outline" size="sm" className="w-full">
+                <Bell className="h-4 w-4" />
+                Follow Updates
+              </Button>
             </div>
-
-            {/* Copyright */}
-            <div className="text-sm text-muted-foreground">
-              © 2025 Validated by Users. All rights reserved.
-            </div>
+          </div>
+          
+          <div className="border-t border-border/50 mt-12 pt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              © 2024 Validate & Win. Building the future of product validation.
+            </p>
           </div>
         </div>
       </footer>
