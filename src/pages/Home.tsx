@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
+import WaitlistBanner from "@/components/WaitlistBanner";
 import { MediaUpload } from "@/components/MediaUpload";
 import { ArrowRight, Trophy, Users, Zap, Star, MessageCircle, Target, ChevronDown, ChevronUp, Lightbulb, FileText, Globe, Rocket, CheckCircle, XCircle, Search } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -21,6 +22,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <WaitlistBanner />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -57,6 +59,29 @@ const Home = () => {
                   Request User Feedback
                 </Button>
               </Link>
+            </div>
+            
+            {/* Waitlist CTA */}
+            <div className="mb-8">
+              <Card className="max-w-lg mx-auto bg-gradient-success/10 border-success/20 shadow-prize">
+                <CardContent className="p-6 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-gradient-success rounded-full flex items-center justify-center">
+                      <Rocket className="w-4 h-4 text-success-foreground" />
+                    </div>
+                    <Badge className="bg-accent/20 text-accent-foreground">Pre-Launch</Badge>
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">Join Our Waitlist</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Be among the first to earn money from product feedback when we launch!
+                  </p>
+                  <Link to="/landing">
+                    <Button variant="outline" size="sm" className="border-success/40 hover:bg-success/10">
+                      Get Early Access <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
             
             {/* Quick Navigation CTAs */}

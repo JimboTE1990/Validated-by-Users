@@ -54,6 +54,9 @@ const Header = () => {
           <Link to="/feed" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
             Discover
           </Link>
+          <Link to="/landing" className="text-sm font-medium text-primary hover:text-primary-glow transition-smooth font-semibold">
+            Join Waitlist
+          </Link>
           {user ? (
             <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-smooth">
               Profile
