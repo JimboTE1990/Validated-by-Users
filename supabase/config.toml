@@ -5,6 +5,3 @@ verify_jwt = true
 
 [functions.verify-payment]  
 verify_jwt = false
-
-[functions.waitlist-signup]
-verify_jwt = false
