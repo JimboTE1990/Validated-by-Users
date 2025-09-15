@@ -111,41 +111,71 @@ export const useAdminSecurity = (options: AdminSecurityOptions = {}) => {
   ): Promise<T | null> => {
     // Check session timeout first
     if (options.enableSessionTracking && checkSessionTimeout()) {
+      toast({
+        title: "Session Expired",
+        description: "Your admin session has timed out. Please refresh and log in again.",
+        variant: "destructive"
+      });
       throw new Error('Session expired');
     }
 
-    // Verify admin access
+    // Verify admin access with enhanced security
     const isValid = await verifyAdminAccess();
     if (!isValid) {
+      toast({
+        title: "Access Denied",
+        description: "Admin privileges required for this action.",
+        variant: "destructive"
+      });
       throw new Error('Admin access denied');
     }
 
     try {
-      // Execute the operation
-      const result = await operation();
+      // Execute the operation with timeout protection
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Operation timeout')), 30000)
+      );
       
-      // Log successful action
+      const result = await Promise.race([
+        operation(),
+        timeoutPromise
+      ]) as T;
+      
+      // Log successful action with sanitized details
       await logActivity(action, resourceType, resourceId, {
         ...details,
         success: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent.substring(0, 200), // Limit size
+        ip: 'client-side' // Client can't get real IP
       });
 
       updateActivity();
       return result;
     } catch (error) {
-      // Log failed action
+      // Log failed action with security considerations
+      const sanitizedError = error.message?.substring(0, 500) || 'Unknown error';
+      
       await logActivity(action, resourceType, resourceId, {
         ...details,
         success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
+        error: sanitizedError,
+        timestamp: new Date().toISOString(),
+        severity: 'error'
       });
 
-      console.error(`Admin action '${action}' failed:`, error);
+      console.error(`Admin action '${action}' failed:`, sanitizedError);
+      
+      // Show user-friendly error
+      toast({
+        title: "Action Failed",
+        description: "The admin action could not be completed. Please try again.",
+        variant: "destructive"
+      });
+      
       throw error;
     }
-  }, [verifyAdminAccess, logActivity, updateActivity, checkSessionTimeout, options]);
+  }, [verifyAdminAccess, logActivity, updateActivity, checkSessionTimeout, options, toast]);
 
   return {
     logActivity,
