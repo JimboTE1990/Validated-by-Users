@@ -34,6 +34,7 @@ import { AdminUserModeration } from "@/components/admin/AdminUserModeration";
 import { AdminAccountManager } from "@/components/admin/AdminAccountManager";
 import { AdminOversight } from "@/components/admin/AdminOversight";
 import { AdminSecurityPanel } from "@/components/admin/AdminSecurityPanel";
+import { AdminDeveloperTools } from "@/components/admin/AdminDeveloperTools";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const AdminDashboard = () => {
@@ -201,7 +202,7 @@ const AdminDashboard = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <TabsList className="grid grid-cols-6 max-w-3xl mb-8">
+            <TabsList className="grid grid-cols-7 max-w-4xl mb-8">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <Activity className="h-4 w-4" />
                 Overview
@@ -225,6 +226,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="security" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
                 Security
+              </TabsTrigger>
+              <TabsTrigger value="developer" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Developer
               </TabsTrigger>
             </TabsList>
 
@@ -340,6 +345,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="security">
               <AdminSecurityPanel />
+            </TabsContent>
+
+            <TabsContent value="developer">
+              <AdminDeveloperTools />
             </TabsContent>
           </Tabs>
         </div>
