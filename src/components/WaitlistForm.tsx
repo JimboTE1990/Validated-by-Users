@@ -64,10 +64,10 @@ const WaitlistForm = () => {
       // Reset form after success
       setFormData({ name: "", email: "" });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Waitlist signup error:', error);
       
-      if (error.message?.includes('duplicate key') || error.message?.includes('already exists')) {
+      if ((error as Error)?.message?.includes('duplicate key') || (error as Error)?.message?.includes('already exists')) {
         toast({
           title: "Already Signed Up",
           description: "This email is already on our waitlist. Thanks for your interest!",

@@ -75,7 +75,7 @@ export const usePosts = () => {
     try {
       setLoading(true);
       
-      let query = supabase
+      const query = supabase
         .from('posts')
         .select(`
           *,

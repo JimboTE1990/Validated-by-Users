@@ -34,7 +34,7 @@ const createBespokePrizes = (prizePool: number, winnerCount: number): number[] =
   if (winnerCount === 1) return [Math.max(10, prizePool)];
   
   const prizes: number[] = [];
-  let remainingPool = prizePool;
+  const remainingPool = prizePool;
   
   // Ensure each winner gets at least £10
   const minPerWinner = 10;

@@ -19,4 +19,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@radix-ui/react-accordion', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        }
+      }
+    }
+  },
 }));

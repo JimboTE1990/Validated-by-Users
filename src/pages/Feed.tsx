@@ -40,20 +40,20 @@ const Feed = () => {
     [categories]
   );
 
-  const amountRanges = [
+  const amountRanges = useMemo(() => [
     { label: "Under £50", min: 0, max: 49 },
     { label: "£50 - £100", min: 50, max: 100 },
     { label: "£100 - £500", min: 100, max: 500 },
     { label: "£500 - £1000", min: 500, max: 1000 },
     { label: "Over £1000", min: 1000, max: Infinity }
-  ];
+  ], []);
 
-  const timeRanges = [
+  const timeRanges = useMemo(() => [
     { label: "Ending soon (< 24h)", hours: 24 },
     { label: "This week (< 7 days)", hours: 168 },
     { label: "This month (< 30 days)", hours: 720 },
     { label: "Long term (> 30 days)", hours: Infinity }
-  ];
+  ], []);
 
   const getTimeLeftInHours = (endDate: string) => {
     const now = new Date();
