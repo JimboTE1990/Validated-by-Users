@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Info</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .env-var { background: #f0f0f0; padding: 10px; margin: 5px 0; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Deployment Debug Info</h1>
+
+    <h2>Environment Variables:</h2>
+    <div class="env-var">
+        <strong>VITE_SUPABASE_URL:</strong>
+        <span id="supabase-url">Loading...</span>
+    </div>
+    <div class="env-var">
+        <strong>VITE_SUPABASE_PROJECT_ID:</strong>
+        <span id="project-id">Loading...</span>
+    </div>
+    <div class="env-var">
+        <strong>VITE_SUPABASE_PUBLISHABLE_KEY:</strong>
+        <span id="api-key">Loading...</span>
+    </div>
+
+    <h2>App Status:</h2>
+    <div id="status">Checking...</div>
+
+    <h2>Errors:</h2>
+    <div id="errors">None detected</div>
+
+    <script>
+        // Show environment variables
+        document.getElementById('supabase-url').textContent =
+            import.meta.env.VITE_SUPABASE_URL || 'NOT SET';
+        document.getElementById('project-id').textContent =
+            import.meta.env.VITE_SUPABASE_PROJECT_ID || 'NOT SET';
+        document.getElementById('api-key').textContent =
+            import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ? 'SET (hidden)' : 'NOT SET';
+
+        // Basic app test
+        try {
+            document.getElementById('status').innerHTML =
+                '<span class="success">JavaScript working</span>';
+        } catch (e) {
+            document.getElementById('errors').innerHTML =
+                '<span class="error">JavaScript Error: ' + e.message + '</span>';
+        }
+
+        // Catch any runtime errors
+        window.onerror = function(msg, url, line) {
+            document.getElementById('errors').innerHTML +=
+                '<div class="error">Error: ' + msg + ' at line ' + line + '</div>';
+        };
+    </script>
+</body>
+</html>
