@@ -11,14 +11,15 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     SUPABASE_URL: SUPABASE_URL ? '✅ Set' : '❌ Missing',
     SUPABASE_PUBLISHABLE_KEY: SUPABASE_PUBLISHABLE_KEY ? '✅ Set' : '❌ Missing'
   });
+  throw new Error('Missing required Supabase environment variables. Please check your .env file.');
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(
-  SUPABASE_URL || 'https://placeholder.supabase.co',
-  SUPABASE_PUBLISHABLE_KEY || 'placeholder-key',
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
       storage: localStorage,
